@@ -14,6 +14,7 @@ import (
 	"github.com/bassosimone/2026-03-23-lab/internal/command"
 	"github.com/bassosimone/2026-03-23-lab/internal/httpapi"
 	"github.com/bassosimone/2026-03-23-lab/internal/pktlog"
+	"github.com/bassosimone/2026-03-23-lab/internal/scenario"
 	"github.com/bassosimone/2026-03-23-lab/internal/vis"
 	"github.com/bassosimone/iss"
 	"github.com/bassosimone/runtimex"
@@ -40,7 +41,7 @@ func serveMain(ctx context.Context, args []string) error {
 	)
 
 	// Create and start the simulation.
-	sim := iss.MustNewSimulation(ctx, datadir, iss.ScenarioV4(), router)
+	sim := iss.MustNewSimulation(ctx, datadir, scenario.Default(), router)
 	defer sim.Wait()
 	runner := command.NewRunner(sim)
 
