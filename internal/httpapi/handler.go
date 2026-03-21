@@ -19,6 +19,16 @@ import (
 //
 // Use [NewHandler] to construct.
 type Handler struct {
+	// activeMu protects activeName and activePreset.
+	activeMu sync.Mutex
+
+	// activeName is the name of the currently active DPI preset.
+	// Empty if rules were set via POST /api/dpi (ad-hoc).
+	activeName string
+
+	// activePreset is the currently active DPI preset content.
+	activePreset *dpiPreset
+
 	// dpi is the DPI engine for adding/clearing rules.
 	dpi *vis.DPIEngine
 
@@ -41,9 +51,11 @@ func NewHandler(runner *command.Runner, dpi *vis.DPIEngine, pktlog *pktlog.Logge
 func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/pktlog", h.handleGetPktlog)
 	mux.HandleFunc("DELETE /api/pktlog", h.handleDeletePktlog)
+	mux.HandleFunc("GET /api/dpi", h.handleGetDPI)
 	mux.HandleFunc("POST /api/dpi", h.handleDPI)
 	mux.HandleFunc("GET /api/presets/dpi", h.handleListDPIPresets)
 	mux.HandleFunc("GET /api/presets/dpi/{name}", h.handleGetDPIPreset)
+	mux.HandleFunc("POST /api/presets/dpi/{name}/apply", h.handleApplyDPIPreset)
 	mux.HandleFunc("POST /api/run", h.handleRun)
 }
 
@@ -56,8 +68,28 @@ type dpiPreset struct {
 	Rules []dpiRuleEnvelope `json:"rules"`
 }
 
-// handleDPI handles POST /api/dpi by replacing the DPI ruleset.
-// The request body is a JSON object with "description" and "rules" fields.
+// dpiStatus is the JSON response for GET /api/dpi.
+type dpiStatus struct {
+	// Name is the active preset name, empty for ad-hoc rules.
+	Name string `json:"name"`
+
+	// Preset is the active preset content, nil if no rules are set.
+	Preset *dpiPreset `json:"preset"`
+}
+
+// handleGetDPI handles GET /api/dpi by returning the currently
+// active DPI preset name and content.
+func (h *Handler) handleGetDPI(w http.ResponseWriter, r *http.Request) {
+	h.activeMu.Lock()
+	status := dpiStatus{Name: h.activeName, Preset: h.activePreset}
+	h.activeMu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(status)
+}
+
+// handleDPI handles POST /api/dpi by replacing the DPI ruleset
+// with ad-hoc rules. The active preset name is cleared.
 func (h *Handler) handleDPI(w http.ResponseWriter, r *http.Request) {
 	var preset dpiPreset
 	if err := json.NewDecoder(r.Body).Decode(&preset); err != nil {
@@ -68,6 +100,12 @@ func (h *Handler) handleDPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	h.activeMu.Lock()
+	h.activeName = ""
+	h.activePreset = &preset
+	h.activeMu.Unlock()
+
 	w.WriteHeader(http.StatusNoContent)
 }
 

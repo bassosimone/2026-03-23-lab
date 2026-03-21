@@ -30,7 +30,10 @@ func dpiMain(ctx context.Context, args []string) error {
 	// Read the JSON rules file.
 	body := runtimex.LogFatalOnError1(os.ReadFile(fset.Args()[0]))
 
-	// POST to the /api/dpi endpoint.
+	// TODO(bassosimone): this POSTs directly to /api/dpi, which is the ad-hoc
+	// escape hatch. The server won't track a preset name for rules loaded this
+	// way. This command needs to be restructured to support the presets API
+	// (e.g., listing and applying presets by name).
 	reqURL := runtimex.LogFatalOnError1(url.JoinPath(baseURL, "api/dpi"))
 	req := runtimex.LogFatalOnError1(http.NewRequestWithContext(
 		ctx, http.MethodPost, reqURL, bytes.NewReader(body),
