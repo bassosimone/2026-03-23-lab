@@ -8,7 +8,6 @@ import (
 	"net/netip"
 
 	"github.com/bassosimone/2026-03-23-lab/internal/pktlog"
-	"github.com/bassosimone/2026-03-23-lab/internal/vis"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
@@ -46,9 +45,10 @@ func (h *Handler) servePktlogPCAP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get a snapshot of the entries and filter by perspective.
+	// Get a snapshot of the entries, dissect, and filter by perspective.
 	entries := h.pktlog.Entries()
-	filtered := filterByPerspective(entries, addr)
+	dissected := pktlog.DissectEntries(entries)
+	filtered := pktlog.FilterByPerspective(dissected, addr)
 
 	// Write the pcap to the response.
 	w.Header().Set("Content-Type", "application/vnd.tcpdump.pcap")
@@ -60,40 +60,11 @@ func (h *Handler) servePktlogPCAP(w http.ResponseWriter, r *http.Request) {
 	for _, entry := range filtered {
 		ci := gopacket.CaptureInfo{
 			Timestamp:     entry.Time,
-			CaptureLength: len(entry.Packet),
-			Length:        len(entry.Packet),
+			CaptureLength: len(entry.RawPacket),
+			Length:        len(entry.RawPacket),
 		}
-		if err := pw.WritePacket(ci, entry.Packet); err != nil {
+		if err := pw.WritePacket(ci, entry.RawPacket); err != nil {
 			return
 		}
 	}
-}
-
-// filterByPerspective returns entries visible from the given IP
-// address's perspective. A packet is visible if:
-//   - It entered the router and was sent by addr (outgoing)
-//   - It was delivered and is destined for addr (incoming)
-//
-// This mimics what a tcpdump on addr's network interface would see.
-func filterByPerspective(entries []pktlog.Entry, addr netip.Addr) []pktlog.Entry {
-	var filtered []pktlog.Entry
-	for _, entry := range entries {
-		dp, err := vis.DissectPacket(entry.Packet)
-		if err != nil {
-			continue
-		}
-		switch entry.Event {
-		case vis.PacketEntered:
-			// Outgoing: we see it leave our interface.
-			if dp.SourceAddr() == addr {
-				filtered = append(filtered, entry)
-			}
-		case vis.PacketDelivered:
-			// Incoming: we see it arrive at our interface.
-			if dp.DestinationAddr() == addr {
-				filtered = append(filtered, entry)
-			}
-		}
-	}
-	return filtered
 }
