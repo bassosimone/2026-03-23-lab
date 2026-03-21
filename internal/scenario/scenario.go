@@ -5,6 +5,7 @@
 package scenario
 
 import (
+	"fmt"
 	"io"
 	"math/rand/v2"
 	"net/http"
@@ -54,6 +55,7 @@ func exampleComHandler() http.Handler {
 	mux.Handle("/", iss.DefaultHTTPHandler)
 	mux.HandleFunc("/download", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", downloadSize))
 		io.CopyN(w, &randCharReader{rng: rand.New(rand.NewPCG(42, 0))}, downloadSize)
 	})
 	return mux

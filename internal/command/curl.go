@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"strings"
+	"time"
 
 	"github.com/bassosimone/vflag"
 )
@@ -24,9 +25,13 @@ func (r *Runner) runCurl(ctx context.Context, params *Params) error {
 	fset.Stdout = params.Stdout
 	fset.Stderr = params.Stderr
 	var (
-		resolve string
-		verbose bool
+		output   string
+		progress bool
+		resolve  string
+		verbose  bool
 	)
+	fset.StringVar(&output, 'o', "output", "Write body to `FILE` (use /dev/null to discard).")
+	fset.BoolVar(&progress, '#', "progress-bar", "Show a progress bar.")
 	fset.BoolVar(&verbose, 'v', "verbose", "Print request and response headers.")
 	fset.StringVar(&resolve, 0, "resolve", "Override DNS as `HOST:PORT:ADDR`.")
 	fset.AutoHelp('h', "help", "Print this help message and exit.")
@@ -140,12 +145,98 @@ func (r *Runner) runCurl(ctx context.Context, params *Params) error {
 		fmt.Fprintf(params.Stderr, "<\n")
 	}
 
-	// Copy the response body to stdout.
-	if _, err := io.Copy(params.Stdout, resp.Body); err != nil {
+	// Determine the output destination.
+	var dst io.Writer
+	if output != "" {
+		dst = io.Discard
+	} else {
+		dst = params.Stdout
+	}
+
+	// Copy the response body, optionally showing progress.
+	if progress {
+		err = copyWithProgress(dst, resp.Body, resp.ContentLength, params.Stderr)
+	} else {
+		_, err = io.Copy(dst, resp.Body)
+	}
+	if err != nil {
 		fmt.Fprintf(params.Stderr, "%s\n", err.Error())
 		return err
 	}
 	return nil
+}
+
+// copyWithProgress copies src to dst while printing a progress bar
+// to w. If total is <= 0, only speed is shown (no percentage).
+func copyWithProgress(dst io.Writer, src io.Reader, total int64, w io.Writer) error {
+	buf := make([]byte, 32*1024)
+	var copied int64
+	start := time.Now()
+	lastUpdate := start
+
+	for {
+		n, readErr := src.Read(buf)
+		if n > 0 {
+			if _, err := dst.Write(buf[:n]); err != nil {
+				return err
+			}
+			copied += int64(n)
+
+			// Update the progress bar at most every 200ms.
+			if now := time.Now(); now.Sub(lastUpdate) >= 200*time.Millisecond {
+				lastUpdate = now
+				printProgress(w, copied, total, now.Sub(start))
+			}
+		}
+		if readErr != nil {
+			if readErr == io.EOF {
+				printProgress(w, copied, total, time.Since(start))
+				fmt.Fprintf(w, "\n")
+				return nil
+			}
+			return readErr
+		}
+	}
+}
+
+// printProgress prints a single progress line with \r.
+func printProgress(w io.Writer, copied, total int64, elapsed time.Duration) {
+	speed := float64(copied) / elapsed.Seconds()
+	speedStr := formatSpeed(speed)
+
+	if total > 0 {
+		pct := float64(copied) / float64(total) * 100
+		barWidth := 25
+		filled := int(pct / 100 * float64(barWidth))
+		bar := strings.Repeat("=", filled) + strings.Repeat(" ", barWidth-filled)
+		fmt.Fprintf(w, "\r%3.0f%% [%s] %s  ", pct, bar, speedStr)
+	} else {
+		fmt.Fprintf(w, "\r%s received at %s  ", formatBytes(copied), speedStr)
+	}
+}
+
+// formatSpeed formats a speed in bytes/sec to a human-readable string.
+func formatSpeed(bps float64) string {
+	switch {
+	case bps >= 1<<20:
+		return fmt.Sprintf("%.1f MB/s", bps/float64(1<<20))
+	case bps >= 1<<10:
+		return fmt.Sprintf("%.1f KB/s", bps/float64(1<<10))
+	default:
+		return fmt.Sprintf("%.0f B/s", bps)
+	}
+}
+
+// formatBytes formats a byte count to a human-readable string.
+func formatBytes(b int64) string {
+	switch {
+	case b >= 1<<20:
+		return fmt.Sprintf("%.1f MB", float64(b)/float64(1<<20))
+	case b >= 1<<10:
+		return fmt.Sprintf("%.1f KB", float64(b)/float64(1<<10))
+	default:
+		return fmt.Sprintf("%d B", b)
+	}
 }
 
 // parseResolve parses a --resolve value in the form "host:port:addr".
