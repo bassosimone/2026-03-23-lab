@@ -1,0 +1,13 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
+.console-widget {
+  background: #fff;
+  border-radius: 6px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.console-terminal {
+  width: 100%;
+  height: 100%;
+}
