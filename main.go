@@ -14,6 +14,7 @@ func main() {
 	disp := vclip.NewDispatcherCommand("2026-03-23-lab", vflag.ExitOnError)
 	disp.AddDescription("Internet censorship simulation.")
 
+	disp.AddCommand("dpi", vclip.CommandFunc(dpiMain), "Set DPI rules from a JSON file.")
 	disp.AddCommand("run", vclip.CommandFunc(runMain), "Run a command inside the simulation.")
 	disp.AddCommand("serve", vclip.CommandFunc(serveMain), "Start the simulation HTTP API server.")
 

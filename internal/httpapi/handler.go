@@ -27,7 +27,24 @@ func NewHandler(sim *server.Simulation) *Handler {
 
 // Register registers the API routes on the given [*http.ServeMux].
 func (h *Handler) Register(mux *http.ServeMux) {
+	mux.HandleFunc("POST /api/dpi", h.handleDPI)
 	mux.HandleFunc("POST /api/run", h.handleRun)
+}
+
+// handleDPI handles POST /api/dpi by replacing the DPI ruleset.
+// The request body is a JSON array of rule envelopes. An empty
+// array clears all rules.
+func (h *Handler) handleDPI(w http.ResponseWriter, r *http.Request) {
+	var envelopes []dpiRuleEnvelope
+	if err := json.NewDecoder(r.Body).Decode(&envelopes); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := applyDPIRules(h.sim.DPI(), envelopes); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // runRequest is the JSON request body for the /api/run endpoint.
