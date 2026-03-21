@@ -87,7 +87,7 @@ func NewRouter(options ...RouterOption) *Router {
 // This method satisfies the [iss.Router] interface.
 func (r *Router) Route(ctx context.Context, ix *uis.Internet) {
 	// Initialize the delivery queue.
-	dq := newDeliveryQueue(r, ix)
+	dq := newRouterDeliveryQueue(r, ix)
 	defer dq.Stop()
 
 	for {
@@ -107,23 +107,23 @@ func (r *Router) Route(ctx context.Context, ix *uis.Internet) {
 	}
 }
 
-// deliveryQueue is the delivery queue used by the [*Router].
+// routerDeliveryQueue is the delivery queue used by the [*Router].
 //
-// Use [newDeliveryQueue] to construct.
+// Use [newRouterDeliveryQueue] to construct.
 //
-// Remember to defer a call to [*deliveryQueue.Stop].
-type deliveryQueue struct {
-	heap   deliveryHeap
+// Remember to defer a call to [*routerDeliveryQueue.Stop].
+type routerDeliveryQueue struct {
+	heap   routerDeliveryHeap
 	ix     *uis.Internet
 	router *Router
 	timer  *time.Timer
 }
 
-var _ DPIPacketInjector = &deliveryQueue{}
+var _ DPIPacketInjector = &routerDeliveryQueue{}
 
-// newDeliveryQueue constructs a new [*deliveryQueue] instance.
-func newDeliveryQueue(r *Router, ix *uis.Internet) *deliveryQueue {
-	dq := &deliveryQueue{
+// newRouterDeliveryQueue constructs a new [*routerDeliveryQueue] instance.
+func newRouterDeliveryQueue(r *Router, ix *uis.Internet) *routerDeliveryQueue {
+	dq := &routerDeliveryQueue{
 		ix:     ix,
 		router: r,
 		timer:  time.NewTimer(time.Hour),
@@ -132,13 +132,13 @@ func newDeliveryQueue(r *Router, ix *uis.Internet) *deliveryQueue {
 	return dq
 }
 
-// Stop stops the [*deliveryQueue] timer.
-func (dq *deliveryQueue) Stop() {
+// Stop stops the [*routerDeliveryQueue] timer.
+func (dq *routerDeliveryQueue) Stop() {
 	dq.timer.Stop()
 }
 
-// OnFrameEnter is invoked when a packet enters the [*deliveryQueue].
-func (dq *deliveryQueue) OnFrameEnter(frame uis.VNICFrame) {
+// OnFrameEnter is invoked when a packet enters the [*routerDeliveryQueue].
+func (dq *routerDeliveryQueue) OnFrameEnter(frame uis.VNICFrame) {
 	// Notify the hook that a packet entered the router.
 	if dq.router.hook != nil {
 		dq.router.hook(PacketEntered, frame.Packet)
@@ -164,7 +164,7 @@ func (dq *deliveryQueue) OnFrameEnter(frame uis.VNICFrame) {
 
 	// Enqueue for delayed delivery.
 	deadline := time.Now().Add(totalDelay)
-	heap.Push(&dq.heap, deliveryEntry{
+	heap.Push(&dq.heap, routerDeliveryEntry{
 		deadline: deadline,
 		frame:    frame,
 	})
@@ -176,18 +176,18 @@ func (dq *deliveryQueue) OnFrameEnter(frame uis.VNICFrame) {
 }
 
 // PacketTimerCh returns the channel posted when it's time to send a packet.
-func (dq *deliveryQueue) PacketTimerCh() <-chan time.Time {
+func (dq *routerDeliveryQueue) PacketTimerCh() <-chan time.Time {
 	return dq.timer.C
 }
 
 // OnPacketTimer is invoked when it's time to send 1+ packets.
-func (dq *deliveryQueue) OnPacketTimer() {
+func (dq *routerDeliveryQueue) OnPacketTimer() {
 	// Deliver all frames whose deadline has passed.
 	for now := time.Now(); dq.heap.Len() > 0; {
 		if dq.heap[0].deadline.After(now) {
 			break
 		}
-		entry := heap.Pop(&dq.heap).(deliveryEntry)
+		entry := heap.Pop(&dq.heap).(routerDeliveryEntry)
 		dq.DeliverFrame(entry.frame)
 	}
 
@@ -201,15 +201,15 @@ func (dq *deliveryQueue) OnPacketTimer() {
 }
 
 // DeliverFrame delivers the given frame.
-func (dq *deliveryQueue) DeliverFrame(frame uis.VNICFrame) {
+func (dq *routerDeliveryQueue) DeliverFrame(frame uis.VNICFrame) {
 	if dq.router.hook != nil {
 		dq.router.hook(PacketDelivered, frame.Packet)
 	}
 	dq.ix.Deliver(frame)
 }
 
-// deliveryEntry pairs a frame with its delivery deadline.
-type deliveryEntry struct {
+// routerDeliveryEntry pairs a frame with its delivery deadline.
+type routerDeliveryEntry struct {
 	// deadline is when this frame should be delivered.
 	deadline time.Time
 
@@ -217,33 +217,33 @@ type deliveryEntry struct {
 	frame uis.VNICFrame
 }
 
-// deliveryHeap is a min-heap of [deliveryEntry] ordered by deadline.
-type deliveryHeap []deliveryEntry
+// routerDeliveryHeap is a min-heap of [routerDeliveryEntry] ordered by deadline.
+type routerDeliveryHeap []routerDeliveryEntry
 
-var _ heap.Interface = &deliveryHeap{}
+var _ heap.Interface = &routerDeliveryHeap{}
 
 // Len implements [heap.Interface].
-func (h deliveryHeap) Len() int {
+func (h routerDeliveryHeap) Len() int {
 	return len(h)
 }
 
 // Less implements [heap.Interface].
-func (h deliveryHeap) Less(i, j int) bool {
+func (h routerDeliveryHeap) Less(i, j int) bool {
 	return h[i].deadline.Before(h[j].deadline)
 }
 
 // Swap implements [heap.Interface].
-func (h deliveryHeap) Swap(i, j int) {
+func (h routerDeliveryHeap) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
 }
 
 // Push implements [heap.Interface].
-func (h *deliveryHeap) Push(x any) {
-	*h = append(*h, x.(deliveryEntry))
+func (h *routerDeliveryHeap) Push(x any) {
+	*h = append(*h, x.(routerDeliveryEntry))
 }
 
 // Pop implements [heap.Interface].
-func (h *deliveryHeap) Pop() any {
+func (h *routerDeliveryHeap) Pop() any {
 	old := *h
 	n := len(old)
 	entry := old[n-1]
