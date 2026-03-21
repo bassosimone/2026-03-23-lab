@@ -31,7 +31,7 @@ var _ DPIRule = &DPIDNSRule{}
 
 // Filter implements [DPIRule].
 func (r *DPIDNSRule) Filter(
-	direction DPIDirection, packet *DissectedPacket, ix *uis.Internet) (DPIPolicy, bool) {
+	direction DPIDirection, packet *DissectedPacket, injector DPIPacketInjector) (DPIPolicy, bool) {
 	// Only inspect client-to-server traffic.
 	if direction != DPIDirectionClientToServer {
 		return DPIPolicy{}, false
@@ -67,7 +67,7 @@ func (r *DPIDNSRule) Filter(
 	// Build and inject the spoofed UDP datagram.
 	spoofed, err := reflectUDPWithPayload(packet, rawResponse)
 	if err == nil {
-		ix.Deliver(uis.VNICFrame{Packet: spoofed})
+		injector.DeliverFrame(uis.VNICFrame{Packet: spoofed})
 	}
 
 	return DPIPolicy{}, true

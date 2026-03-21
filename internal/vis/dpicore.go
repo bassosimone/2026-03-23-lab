@@ -15,6 +15,14 @@ import (
 	"github.com/google/gopacket/layers"
 )
 
+// DPIPacketInjector allows DPI rules to inject spoofed packets
+// into the network. The [*deliveryQueue] implements this interface,
+// delivering injected packets immediately (bypassing the delay
+// queue) so they behave like real middlebox injections.
+type DPIPacketInjector interface {
+	DeliverFrame(frame uis.VNICFrame)
+}
+
 // DPIDirection is the direction of a packet within a flow.
 type DPIDirection int
 
@@ -31,8 +39,6 @@ const (
 )
 
 // DPIPolicy describes the routing action to apply to a matched packet.
-// Rules that need to inject spoofed packets (e.g., TCP RST, fake DNS
-// responses) do so directly via [*uis.Internet] during [DPIRule.Filter].
 //
 // To drop a packet, set PLR to 1.0. A PLR >= 1.0 guarantees the
 // packet will be discarded by the router.
@@ -47,12 +53,12 @@ type DPIPolicy struct {
 
 // DPIRule is a deep packet inspection rule. Implementations inspect
 // a [*DissectedPacket] and return a [DPIPolicy] if the rule matches.
-// Rules that need to inject spoofed packets do so directly via the
-// provided [*uis.Internet].
+// Rules that need to inject spoofed packets do so via the
+// provided [DPIPacketInjector].
 type DPIRule interface {
 	// Filter inspects a packet and returns a policy if matched.
-	// Rules may inject spoofed packets directly via ix.
-	Filter(direction DPIDirection, packet *DissectedPacket, ix *uis.Internet) (DPIPolicy, bool)
+	// Rules may inject spoofed packets via the injector.
+	Filter(direction DPIDirection, packet *DissectedPacket, injector DPIPacketInjector) (DPIPolicy, bool)
 }
 
 // DPIEngine is a deep packet inspection engine that tracks flows
@@ -95,7 +101,7 @@ func (de *DPIEngine) ClearRules() {
 
 // Inspect applies DPI to a raw IP packet. It returns a policy and true if
 // a rule matched, or the zero policy and false otherwise.
-func (de *DPIEngine) Inspect(rawPacket []byte, ix *uis.Internet) (DPIPolicy, bool) {
+func (de *DPIEngine) Inspect(rawPacket []byte, injector DPIPacketInjector) (DPIPolicy, bool) {
 	// Parse the packet; silently ignore packets we cannot dissect.
 	packet, err := DissectPacket(rawPacket)
 	if err != nil {
@@ -131,7 +137,7 @@ func (de *DPIEngine) Inspect(rawPacket []byte, ix *uis.Internet) (DPIPolicy, boo
 	de.mu.Lock()
 	defer de.mu.Unlock()
 	for _, rule := range de.rules {
-		policy, match := rule.Filter(direction, packet, ix)
+		policy, match := rule.Filter(direction, packet, injector)
 		if match {
 			flow.policy = policy
 			flow.matched = true

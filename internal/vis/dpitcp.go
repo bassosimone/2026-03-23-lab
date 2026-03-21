@@ -72,7 +72,7 @@ var _ DPIRule = &DPITCPRule{}
 
 // Filter implements [DPIRule].
 func (r *DPITCPRule) Filter(
-	direction DPIDirection, packet *DissectedPacket, ix *uis.Internet) (DPIPolicy, bool) {
+	direction DPIDirection, packet *DissectedPacket, injector DPIPacketInjector) (DPIPolicy, bool) {
 	// Only inspect client-to-server TCP traffic.
 	if direction != DPIDirectionClientToServer {
 		return DPIPolicy{}, false
@@ -104,7 +104,7 @@ func (r *DPITCPRule) Filter(
 			tcp.RST = true
 		})
 		if err == nil {
-			ix.Deliver(uis.VNICFrame{Packet: spoofed})
+			injector.DeliverFrame(uis.VNICFrame{Packet: spoofed})
 		}
 		return DPIPolicy{PLR: 1.0}, true
 

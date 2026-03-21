@@ -86,15 +86,9 @@ func NewRouter(options ...RouterOption) *Router {
 //
 // This method satisfies the [iss.Router] interface.
 func (r *Router) Route(ctx context.Context, ix *uis.Internet) {
-	// Initialize the heap keeping packets sorted by min delivery time.
-	var pending deliveryHeap
-	heap.Init(&pending)
-
-	// The timer fires when the earliest pending frame is due.
-	// We create it stopped and activate it when needed.
-	timer := time.NewTimer(time.Hour)
-	timer.Stop()
-	defer timer.Stop()
+	// Initialize the delivery queue.
+	dq := newDeliveryQueue(r, ix)
+	defer dq.Stop()
 
 	for {
 		select {
@@ -104,64 +98,114 @@ func (r *Router) Route(ctx context.Context, ix *uis.Internet) {
 
 		// 2. We received a new packet to deliver.
 		case frame := <-ix.InFlight():
-			// Notify the hook that a packet entered the router.
-			if r.hook != nil {
-				r.hook(PacketEntered, frame.Packet)
-			}
-
-			// Every packet gets base delay plus random jitter (1–2000µs) so that
-			// any DPI rule always takes deterministic precedence.
-			totalDelay := r.delay + time.Duration(1+rand.IntN(2000))*time.Microsecond
-
-			// Run DPI inspection if an engine is configured.
-			if r.engine != nil {
-				policy, matched := r.engine.Inspect(frame.Packet, ix)
-				if matched {
-					// Apply probabilistic packet loss (PLR >= 1.0 means drop).
-					if policy.PLR > 0 && rand.Float64() < policy.PLR {
-						continue
-					}
-
-					// Possibly inflate the total delay.
-					totalDelay += policy.Delay
-				}
-			}
-
-			// Enqueue for delayed delivery.
-			deadline := time.Now().Add(totalDelay)
-			heap.Push(&pending, deliveryEntry{
-				deadline: deadline,
-				frame:    frame,
-			})
-
-			// If this frame became the earliest, reset the timer.
-			if pending[0].deadline.Equal(deadline) {
-				timer.Reset(time.Until(deadline))
-			}
+			dq.OnFrameEnter(frame)
 
 		// 3. Deadline expired for packet.
-		case <-timer.C:
-			// Deliver all frames whose deadline has passed.
-			for now := time.Now(); pending.Len() > 0; {
-				if pending[0].deadline.After(now) {
-					break
-				}
-				entry := heap.Pop(&pending).(deliveryEntry)
-				if r.hook != nil {
-					r.hook(PacketDelivered, entry.frame.Packet)
-				}
-				ix.Deliver(entry.frame)
-			}
-
-			// Schedule the next delivery if there are pending frames
-			// otherwise make the timer fire in the future.
-			delta := time.Hour
-			if pending.Len() > 0 {
-				delta = max(time.Until(pending[0].deadline), 0)
-			}
-			timer.Reset(delta)
+		case <-dq.PacketTimerCh():
+			dq.OnPacketTimer()
 		}
 	}
+}
+
+// deliveryQueue is the delivery queue used by the [*Router].
+//
+// Use [newDeliveryQueue] to construct.
+//
+// Remember to defer a call to [*deliveryQueue.Stop].
+type deliveryQueue struct {
+	heap   deliveryHeap
+	ix     *uis.Internet
+	router *Router
+	timer  *time.Timer
+}
+
+var _ DPIPacketInjector = &deliveryQueue{}
+
+// newDeliveryQueue constructs a new [*deliveryQueue] instance.
+func newDeliveryQueue(r *Router, ix *uis.Internet) *deliveryQueue {
+	dq := &deliveryQueue{
+		ix:     ix,
+		router: r,
+		timer:  time.NewTimer(time.Hour),
+	}
+	heap.Init(&dq.heap)
+	return dq
+}
+
+// Stop stops the [*deliveryQueue] timer.
+func (dq *deliveryQueue) Stop() {
+	dq.timer.Stop()
+}
+
+// OnFrameEnter is invoked when a packet enters the [*deliveryQueue].
+func (dq *deliveryQueue) OnFrameEnter(frame uis.VNICFrame) {
+	// Notify the hook that a packet entered the router.
+	if dq.router.hook != nil {
+		dq.router.hook(PacketEntered, frame.Packet)
+	}
+
+	// Every packet gets base delay plus random jitter (1–2000µs) so that
+	// any DPI rule always takes deterministic precedence.
+	totalDelay := dq.router.delay + time.Duration(1+rand.IntN(2000))*time.Microsecond
+
+	// Run DPI inspection if an engine is configured.
+	if dq.router.engine != nil {
+		policy, matched := dq.router.engine.Inspect(frame.Packet, dq)
+		if matched {
+			// Apply probabilistic packet loss (PLR >= 1.0 means drop).
+			if policy.PLR > 0 && rand.Float64() < policy.PLR {
+				return
+			}
+
+			// Possibly inflate the total delay.
+			totalDelay += policy.Delay
+		}
+	}
+
+	// Enqueue for delayed delivery.
+	deadline := time.Now().Add(totalDelay)
+	heap.Push(&dq.heap, deliveryEntry{
+		deadline: deadline,
+		frame:    frame,
+	})
+
+	// If this frame became the earliest, reset the timer.
+	if dq.heap[0].deadline.Equal(deadline) {
+		dq.timer.Reset(time.Until(deadline))
+	}
+}
+
+// PacketTimerCh returns the channel posted when it's time to send a packet.
+func (dq *deliveryQueue) PacketTimerCh() <-chan time.Time {
+	return dq.timer.C
+}
+
+// OnPacketTimer is invoked when it's time to send 1+ packets.
+func (dq *deliveryQueue) OnPacketTimer() {
+	// Deliver all frames whose deadline has passed.
+	for now := time.Now(); dq.heap.Len() > 0; {
+		if dq.heap[0].deadline.After(now) {
+			break
+		}
+		entry := heap.Pop(&dq.heap).(deliveryEntry)
+		dq.DeliverFrame(entry.frame)
+	}
+
+	// Schedule the next delivery if there are pending frames
+	// otherwise make the timer fire in the future.
+	delta := time.Hour
+	if dq.heap.Len() > 0 {
+		delta = max(time.Until(dq.heap[0].deadline), 0)
+	}
+	dq.timer.Reset(delta)
+}
+
+// DeliverFrame delivers the given frame.
+func (dq *deliveryQueue) DeliverFrame(frame uis.VNICFrame) {
+	if dq.router.hook != nil {
+		dq.router.hook(PacketDelivered, frame.Packet)
+	}
+	dq.ix.Deliver(frame)
 }
 
 // deliveryEntry pairs a frame with its delivery deadline.
