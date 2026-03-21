@@ -11,8 +11,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/bassosimone/2026-03-23-lab/internal/httpapi"
 	"github.com/bassosimone/2026-03-23-lab/internal/command"
+	"github.com/bassosimone/2026-03-23-lab/internal/httpapi"
+	"github.com/bassosimone/2026-03-23-lab/internal/pktlog"
 	"github.com/bassosimone/2026-03-23-lab/internal/vis"
 	"github.com/bassosimone/iss"
 	"github.com/bassosimone/runtimex"
@@ -29,11 +30,13 @@ func serveMain(ctx context.Context, args []string) error {
 	fset.AutoHelp('h', "help", "Print this help message and exit.")
 	runtimex.PanicOnError0(fset.Parse(args)) // We are using vflag.ExitOnError
 
-	// Create the DPI engine and router.
+	// Create the DPI engine, packet logger, and router.
 	dpi := vis.NewDPIEngine()
+	logger := pktlog.NewLogger(10000)
 	router := vis.NewRouter(
 		vis.RouterOptionDelay(10*time.Millisecond),
 		vis.RouterOptionDPI(dpi),
+		vis.RouterOptionHook(logger.Hook),
 	)
 
 	// Create and start the simulation.
