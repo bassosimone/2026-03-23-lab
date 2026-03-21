@@ -10,19 +10,23 @@ import (
 	"sync"
 
 	"github.com/bassosimone/2026-03-23-lab/internal/server"
+	"github.com/bassosimone/2026-03-23-lab/internal/vis"
 )
 
 // Handler is the HTTP API handler for a [*server.Simulation].
 //
 // Use [NewHandler] to construct.
 type Handler struct {
+	// dpi is the DPI engine for adding/clearing rules.
+	dpi *vis.DPIEngine
+
 	// sim is the simulation to execute commands against.
 	sim *server.Simulation
 }
 
-// NewHandler creates a new [*Handler] for the given simulation.
-func NewHandler(sim *server.Simulation) *Handler {
-	return &Handler{sim: sim}
+// NewHandler creates a new [*Handler].
+func NewHandler(sim *server.Simulation, dpi *vis.DPIEngine) *Handler {
+	return &Handler{dpi: dpi, sim: sim}
 }
 
 // Register registers the API routes on the given [*http.ServeMux].
@@ -40,7 +44,7 @@ func (h *Handler) handleDPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := applyDPIRules(h.sim.DPI(), envelopes); err != nil {
+	if err := applyDPIRules(h.dpi, envelopes); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

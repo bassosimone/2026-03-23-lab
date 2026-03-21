@@ -7,53 +7,27 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
-	"github.com/bassosimone/2026-03-23-lab/internal/vis"
 	"github.com/bassosimone/iss"
 )
 
-// Simulation is a simulated internet with DPI-capable routing.
+// Simulation wraps an [*iss.Simulation] to dispatch commands.
 //
 // Use [NewSimulation] to construct.
 type Simulation struct {
-	// dpi is the DPI engine for adding/clearing rules.
-	dpi *vis.DPIEngine
-
 	// sim is the underlying [*iss.Simulation].
 	sim *iss.Simulation
 }
 
-// NewSimulation creates a [*Simulation] with 10ms base propagation
-// delay and an active (but empty) DPI engine.
-//
-// The simulation starts routing packets immediately. Cancel ctx
-// and call [*Simulation.Wait] for clean shutdown.
-func NewSimulation(ctx context.Context, datadir string, scenario *iss.Scenario) *Simulation {
-	dpi := vis.NewDPIEngine()
-	router := vis.NewRouter(
-		vis.RouterOptionDelay(10*time.Millisecond),
-		vis.RouterOptionDPI(dpi),
-	)
-	return &Simulation{
-		dpi: dpi,
-		sim: iss.MustNewSimulation(ctx, datadir, scenario, router),
-	}
-}
-
-// DPI returns the [*vis.DPIEngine] for adding or clearing rules.
-func (s *Simulation) DPI() *vis.DPIEngine {
-	return s.dpi
-}
-
-// ISS returns the underlying [*iss.Simulation] for accessing
-// client operations (DialContext, LookupHost, CertPool, etc.).
-func (s *Simulation) ISS() *iss.Simulation {
-	return s.sim
+// NewSimulation creates a [*Simulation] from a pre-configured
+// [*iss.Simulation]. The caller is responsible for constructing
+// the router, DPI engine, and any other components.
+func NewSimulation(sim *iss.Simulation) *Simulation {
+	return &Simulation{sim: sim}
 }
 
 // Wait waits for the simulation to shut down. Cancel the context
-// passed to [NewSimulation] before calling this method.
+// passed to [iss.MustNewSimulation] before calling this method.
 func (s *Simulation) Wait() {
 	s.sim.Wait()
 }
