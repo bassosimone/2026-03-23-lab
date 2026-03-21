@@ -1,0 +1,10 @@
+[
+  {
+    "type": "tcp",
+    "rule": {
+      "action": "drop",
+      "server_addr": "104.18.26.120",
+      "server_port": 443
+    }
+  }
+]
