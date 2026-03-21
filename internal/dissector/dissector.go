@@ -55,6 +55,66 @@ type PacketSummary struct {
 
 	// Info is a Wireshark-style one-line summary.
 	Info string `json:"info"`
+
+	// Detail contains the full header breakdown for the detail pane.
+	Detail *PacketDetail `json:"detail"`
+}
+
+// PacketDetail contains the full header fields for the detail pane.
+type PacketDetail struct {
+	// IP is the network layer header detail.
+	IP *IPDetail `json:"ip"`
+
+	// TCP is the transport layer header detail (nil for UDP).
+	TCP *TCPDetail `json:"tcp,omitempty"`
+
+	// UDP is the transport layer header detail (nil for TCP).
+	UDP *UDPDetail `json:"udp,omitempty"`
+}
+
+// IPDetail contains IPv4 header fields.
+type IPDetail struct {
+	Version    uint8  `json:"version"`
+	IHL        uint8  `json:"ihl"`
+	TOS        uint8  `json:"tos"`
+	TotalLen   uint16 `json:"total_length"`
+	ID         uint16 `json:"id"`
+	FlagDF     bool   `json:"flag_df"`
+	FlagMF     bool   `json:"flag_mf"`
+	FragOffset uint16 `json:"frag_offset"`
+	TTL        uint8  `json:"ttl"`
+	Protocol   uint8  `json:"protocol"`
+	Checksum   uint16 `json:"checksum"`
+	Src        string `json:"src"`
+	Dst        string `json:"dst"`
+}
+
+// TCPDetail contains TCP header fields.
+type TCPDetail struct {
+	SrcPort    uint16 `json:"src_port"`
+	DstPort    uint16 `json:"dst_port"`
+	Seq        uint32 `json:"seq"`
+	Ack        uint32 `json:"ack"`
+	DataOffset uint8  `json:"data_offset"`
+	FlagSYN    bool   `json:"flag_syn"`
+	FlagACK    bool   `json:"flag_ack"`
+	FlagFIN    bool   `json:"flag_fin"`
+	FlagRST    bool   `json:"flag_rst"`
+	FlagPSH    bool   `json:"flag_psh"`
+	FlagURG    bool   `json:"flag_urg"`
+	Window     uint16 `json:"window"`
+	Checksum   uint16 `json:"checksum"`
+	Urgent     uint16 `json:"urgent"`
+	PayloadLen int    `json:"payload_length"`
+}
+
+// UDPDetail contains UDP header fields.
+type UDPDetail struct {
+	SrcPort    uint16 `json:"src_port"`
+	DstPort    uint16 `json:"dst_port"`
+	Length     uint16 `json:"length"`
+	Checksum   uint16 `json:"checksum"`
+	PayloadLen int    `json:"payload_length"`
 }
 
 // Summarize produces a [*PacketSummary] from an already-dissected
@@ -72,6 +132,27 @@ func Summarize(entry pktlog.DissectedEntry, number int) *PacketSummary {
 		DstPort:  dp.DestinationPort(),
 	}
 
+	// Build detail.
+	detail := &PacketDetail{}
+	if ipv4, ok := dp.IP.(*layers.IPv4); ok {
+		detail.IP = &IPDetail{
+			Version:    ipv4.Version,
+			IHL:        ipv4.IHL,
+			TOS:        ipv4.TOS,
+			TotalLen:   ipv4.Length,
+			ID:         ipv4.Id,
+			FlagDF:     ipv4.Flags&layers.IPv4DontFragment != 0,
+			FlagMF:     ipv4.Flags&layers.IPv4MoreFragments != 0,
+			FragOffset: ipv4.FragOffset,
+			TTL:        ipv4.TTL,
+			Protocol:   uint8(ipv4.Protocol),
+			Checksum:   ipv4.Checksum,
+			Src:        ipv4.SrcIP.String(),
+			Dst:        ipv4.DstIP.String(),
+		}
+	}
+	s.Detail = detail
+
 	switch dp.TransportProtocol() {
 	case layers.IPProtocolTCP:
 		s.Protocol = "TCP"
@@ -83,10 +164,34 @@ func Summarize(entry pktlog.DissectedEntry, number int) *PacketSummary {
 			s.Ack = &ack
 		}
 		s.Info = tcpInfo(s)
+		detail.TCP = &TCPDetail{
+			SrcPort:    uint16(dp.TCP.SrcPort),
+			DstPort:    uint16(dp.TCP.DstPort),
+			Seq:        dp.TCP.Seq,
+			Ack:        dp.TCP.Ack,
+			DataOffset: dp.TCP.DataOffset,
+			FlagSYN:    dp.TCP.SYN,
+			FlagACK:    dp.TCP.ACK,
+			FlagFIN:    dp.TCP.FIN,
+			FlagRST:    dp.TCP.RST,
+			FlagPSH:    dp.TCP.PSH,
+			FlagURG:    dp.TCP.URG,
+			Window:     dp.TCP.Window,
+			Checksum:   dp.TCP.Checksum,
+			Urgent:     dp.TCP.Urgent,
+			PayloadLen: len(dp.TCP.Payload),
+		}
 
 	case layers.IPProtocolUDP:
 		s.Protocol = "UDP"
 		s.Info = udpInfo(s)
+		detail.UDP = &UDPDetail{
+			SrcPort:    uint16(dp.UDP.SrcPort),
+			DstPort:    uint16(dp.UDP.DstPort),
+			Length:     dp.UDP.Length,
+			Checksum:   dp.UDP.Checksum,
+			PayloadLen: len(dp.UDP.Payload),
+		}
 	}
 
 	return s
