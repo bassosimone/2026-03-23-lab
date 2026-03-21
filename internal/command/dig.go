@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package server
+package command
 
 import (
 	"context"
@@ -21,7 +21,7 @@ import (
 
 // runDig implements the "dig" command: sends a DNS query and
 // prints the response in dig-like format.
-func (s *Simulation) runDig(ctx context.Context, params *RunCommandParams) error {
+func (r *Runner) runDig(ctx context.Context, params *Params) error {
 	// Parse flags.
 	fset := vflag.NewFlagSet("dig", vflag.ContinueOnError)
 	fset.Stdout = params.Stdout
@@ -64,7 +64,7 @@ func (s *Simulation) runDig(ctx context.Context, params *RunCommandParams) error
 	}
 
 	// Resolve the server name to an IP address.
-	serverAddr, err := s.resolveServer(ctx, server)
+	serverAddr, err := r.resolveServer(ctx, server)
 	if err != nil {
 		fmt.Fprintf(params.Stderr, "%s\n", err.Error())
 		return err
@@ -76,9 +76,9 @@ func (s *Simulation) runDig(ctx context.Context, params *RunCommandParams) error
 	// Exchange via the appropriate transport.
 	var resp *dnscodec.Response
 	if httpsPathFlag != "" {
-		resp, err = s.digHTTPS(ctx, server, httpsPathFlag, query)
+		resp, err = r.digHTTPS(ctx, server, httpsPathFlag, query)
 	} else {
-		resp, err = s.digUDP(ctx, serverAddr, query)
+		resp, err = r.digUDP(ctx, serverAddr, query)
 	}
 	if err != nil {
 		fmt.Fprintf(params.Stderr, "%s\n", err.Error())
@@ -97,20 +97,20 @@ func (s *Simulation) runDig(ctx context.Context, params *RunCommandParams) error
 }
 
 // digUDP performs a DNS query over UDP.
-func (s *Simulation) digUDP(ctx context.Context, serverAddr netip.AddrPort, query *dnscodec.Query) (*dnscodec.Response, error) {
-	txp := minest.NewDNSOverUDPTransport(s.sim, serverAddr)
+func (r *Runner) digUDP(ctx context.Context, serverAddr netip.AddrPort, query *dnscodec.Query) (*dnscodec.Response, error) {
+	txp := minest.NewDNSOverUDPTransport(r.sim, serverAddr)
 	return txp.Exchange(ctx, query)
 }
 
 // digHTTPS performs a DNS query over HTTPS.
-func (s *Simulation) digHTTPS(ctx context.Context, server, path string, query *dnscodec.Query) (*dnscodec.Response, error) {
+func (r *Runner) digHTTPS(ctx context.Context, server, path string, query *dnscodec.Query) (*dnscodec.Response, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
-			DialContext:       s.sim.DialContext,
+			DialContext:       r.sim.DialContext,
 			ForceAttemptHTTP2: true,
 			TLSClientConfig: &tls.Config{
 				NextProtos: []string{"h2", "http/1.1"},
-				RootCAs:    s.sim.CertPool(),
+				RootCAs:    r.sim.CertPool(),
 			},
 		},
 	}
@@ -121,14 +121,14 @@ func (s *Simulation) digHTTPS(ctx context.Context, server, path string, query *d
 
 // resolveServer resolves a server name to a netip.AddrPort.
 // If the server is already an IP address, it is used directly.
-func (s *Simulation) resolveServer(ctx context.Context, server string) (netip.AddrPort, error) {
+func (r *Runner) resolveServer(ctx context.Context, server string) (netip.AddrPort, error) {
 	// Try parsing as IP literal first.
 	if addr, err := netip.ParseAddr(server); err == nil {
 		return netip.AddrPortFrom(addr, 53), nil
 	}
 
 	// Resolve the server name.
-	addrs, err := s.sim.LookupHost(ctx, server)
+	addrs, err := r.sim.LookupHost(ctx, server)
 	if err != nil {
 		return netip.AddrPort{}, fmt.Errorf("resolving %s: %w", server, err)
 	}

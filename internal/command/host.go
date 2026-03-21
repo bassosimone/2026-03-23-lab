@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package server
+package command
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 
 // runHost implements the "host" command: resolves a domain
 // name and prints the resulting addresses.
-func (s *Simulation) runHost(ctx context.Context, params *RunCommandParams) error {
+func (r *Runner) runHost(ctx context.Context, params *Params) error {
 	// Parse flags.
 	fset := vflag.NewFlagSet("host", vflag.ContinueOnError)
 	fset.Stdout = params.Stdout
@@ -30,7 +30,7 @@ func (s *Simulation) runHost(ctx context.Context, params *RunCommandParams) erro
 	}
 	domain := fset.Args()[0]
 
-	addrs, err := s.sim.LookupHost(ctx, domain)
+	addrs, err := r.sim.LookupHost(ctx, domain)
 	if err != nil {
 		fmt.Fprintf(params.Stderr, "%s\n", err.Error())
 		return err

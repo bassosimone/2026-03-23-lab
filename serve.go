@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/bassosimone/2026-03-23-lab/internal/httpapi"
-	"github.com/bassosimone/2026-03-23-lab/internal/server"
+	"github.com/bassosimone/2026-03-23-lab/internal/command"
 	"github.com/bassosimone/2026-03-23-lab/internal/vis"
 	"github.com/bassosimone/iss"
 	"github.com/bassosimone/runtimex"
@@ -37,13 +37,13 @@ func serveMain(ctx context.Context, args []string) error {
 	)
 
 	// Create and start the simulation.
-	issSim := iss.MustNewSimulation(ctx, datadir, iss.ScenarioV4(), router)
-	sim := server.NewSimulation(issSim)
+	sim := iss.MustNewSimulation(ctx, datadir, iss.ScenarioV4(), router)
 	defer sim.Wait()
+	runner := command.NewRunner(sim)
 
 	// Create the HTTP API handler and register routes.
 	mux := http.NewServeMux()
-	handler := httpapi.NewHandler(sim, dpi)
+	handler := httpapi.NewHandler(runner, dpi)
 	handler.Register(mux)
 
 	// Start listening and save the base URL for clients to discover.

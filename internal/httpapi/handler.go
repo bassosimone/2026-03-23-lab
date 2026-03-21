@@ -9,24 +9,24 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/bassosimone/2026-03-23-lab/internal/server"
+	"github.com/bassosimone/2026-03-23-lab/internal/command"
 	"github.com/bassosimone/2026-03-23-lab/internal/vis"
 )
 
-// Handler is the HTTP API handler for a [*server.Simulation].
+// Handler is the HTTP API handler for the simulation.
 //
 // Use [NewHandler] to construct.
 type Handler struct {
 	// dpi is the DPI engine for adding/clearing rules.
 	dpi *vis.DPIEngine
 
-	// sim is the simulation to execute commands against.
-	sim *server.Simulation
+	// runner executes commands against the simulation.
+	runner *command.Runner
 }
 
 // NewHandler creates a new [*Handler].
-func NewHandler(sim *server.Simulation, dpi *vis.DPIEngine) *Handler {
-	return &Handler{dpi: dpi, sim: sim}
+func NewHandler(runner *command.Runner, dpi *vis.DPIEngine) *Handler {
+	return &Handler{dpi: dpi, runner: runner}
 }
 
 // Register registers the API routes on the given [*http.ServeMux].
@@ -106,7 +106,7 @@ func (h *Handler) handleRun(w http.ResponseWriter, r *http.Request) {
 	stderr := &sseWriter{w: pw, mu: mu, event: "stderr"}
 
 	// Run the command.
-	err := h.sim.RunCommand(r.Context(), &server.RunCommandParams{
+	err := h.runner.Run(r.Context(), &command.Params{
 		Argv:   req.Argv,
 		Stdout: stdout,
 		Stderr: stderr,

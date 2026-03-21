@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package server
+package command
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 
 // runCurl implements the "curl" command: fetches a URL using
 // the simulated network and prints the response body.
-func (s *Simulation) runCurl(ctx context.Context, params *RunCommandParams) error {
+func (r *Runner) runCurl(ctx context.Context, params *Params) error {
 	// Parse flags.
 	fset := vflag.NewFlagSet("curl", vflag.ContinueOnError)
 	fset.Stdout = params.Stdout
@@ -68,7 +68,7 @@ func (s *Simulation) runCurl(ctx context.Context, params *RunCommandParams) erro
 		if verbose {
 			fmt.Fprintf(params.Stderr, "* Connecting to %s...\n", address)
 		}
-		conn, err := s.sim.DialContext(ctx, network, address)
+		conn, err := r.sim.DialContext(ctx, network, address)
 		if err != nil {
 			if verbose {
 				fmt.Fprintf(params.Stderr, "* Connect to %s... %s\n", address, err)
@@ -88,7 +88,7 @@ func (s *Simulation) runCurl(ctx context.Context, params *RunCommandParams) erro
 			ForceAttemptHTTP2: true,
 			TLSClientConfig: &tls.Config{
 				NextProtos: []string{"h2", "http/1.1"},
-				RootCAs:    s.sim.CertPool(),
+				RootCAs:    r.sim.CertPool(),
 			},
 		},
 	}
