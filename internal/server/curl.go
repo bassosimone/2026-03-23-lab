@@ -1,0 +1,158 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+package server
+
+import (
+	"context"
+	"crypto/tls"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/http/httptrace"
+	"strings"
+
+	"github.com/bassosimone/vflag"
+)
+
+// runCurl implements the "curl" command: fetches a URL using
+// the simulated network and prints the response body.
+func (s *Simulation) runCurl(ctx context.Context, params *RunCommandParams) error {
+	// Parse flags.
+	fset := vflag.NewFlagSet("curl", vflag.ContinueOnError)
+	fset.Stdout = params.Stdout
+	fset.Stderr = params.Stderr
+	var (
+		resolve string
+		verbose bool
+	)
+	fset.BoolVar(&verbose, 'v', "verbose", "Print request and response headers.")
+	fset.StringVar(&resolve, 0, "resolve", "Override DNS as `HOST:PORT:ADDR`.")
+	fset.AutoHelp('h', "help", "Print this help message and exit.")
+	fset.MinPositionalArgs = 1
+	fset.MaxPositionalArgs = 1
+	if err := fset.Parse(params.Argv[1:]); err != nil {
+		if errors.Is(err, vflag.ErrHelp) {
+			fset.PrintUsageString(params.Stdout)
+			return nil
+		}
+		fset.PrintUsageError(params.Stderr, err)
+		return err
+	}
+	rawURL := fset.Args()[0]
+
+	// Parse --resolve if provided.
+	var rhost, rport, raddr string
+	if resolve != "" {
+		var err error
+		rhost, rport, raddr, err = parseResolve(resolve)
+		if err != nil {
+			fmt.Fprintf(params.Stderr, "%s\n", err.Error())
+			return err
+		}
+	}
+
+	// Build the dial function with optional --resolve override
+	// and optional verbose connection logging.
+	dialFunc := func(ctx context.Context, network, address string) (net.Conn, error) {
+		if resolve != "" {
+			host, port, err := net.SplitHostPort(address)
+			if err != nil {
+				return nil, err
+			}
+			if host == rhost && port == rport {
+				address = net.JoinHostPort(raddr, port)
+			}
+		}
+		if verbose {
+			fmt.Fprintf(params.Stderr, "* Connecting to %s...\n", address)
+		}
+		conn, err := s.sim.DialContext(ctx, network, address)
+		if err != nil {
+			if verbose {
+				fmt.Fprintf(params.Stderr, "* Connect to %s... %s\n", address, err)
+			}
+			return nil, err
+		}
+		if verbose {
+			fmt.Fprintf(params.Stderr, "* Connected to %s... ok\n", address)
+		}
+		return conn, nil
+	}
+
+	// Build the HTTP client using the simulated network.
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext:       dialFunc,
+			ForceAttemptHTTP2: true,
+			TLSClientConfig: &tls.Config{
+				NextProtos: []string{"h2", "http/1.1"},
+				RootCAs:    s.sim.CertPool(),
+			},
+		},
+	}
+
+	// Build the request.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		fmt.Fprintf(params.Stderr, "%s\n", err.Error())
+		return err
+	}
+
+	// If verbose, trace TLS and HTTP events.
+	if verbose {
+		trace := &httptrace.ClientTrace{
+			TLSHandshakeStart: func() {
+				fmt.Fprintf(params.Stderr, "* TLS handshake...\n")
+			},
+			TLSHandshakeDone: func(state tls.ConnectionState, err error) {
+				if err != nil {
+					fmt.Fprintf(params.Stderr, "* TLS handshake... %s\n", err)
+				} else {
+					fmt.Fprintf(params.Stderr, "* TLS handshake... ok (%s)\n", state.NegotiatedProtocol)
+				}
+			},
+			GotConn: func(info httptrace.GotConnInfo) {
+				fmt.Fprintf(params.Stderr, "> GET %s\n", req.URL.RequestURI())
+				fmt.Fprintf(params.Stderr, "> Host: %s\n>\n", req.URL.Host)
+			},
+		}
+		req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+	}
+
+	// Perform the request.
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Fprintf(params.Stderr, "%s\n", err.Error())
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Print verbose response headers.
+	if verbose {
+		fmt.Fprintf(params.Stderr, "< %s\n", resp.Status)
+		for key, values := range resp.Header {
+			for _, value := range values {
+				fmt.Fprintf(params.Stderr, "< %s: %s\n", key, value)
+			}
+		}
+		fmt.Fprintf(params.Stderr, "<\n")
+	}
+
+	// Copy the response body to stdout.
+	if _, err := io.Copy(params.Stdout, resp.Body); err != nil {
+		fmt.Fprintf(params.Stderr, "%s\n", err.Error())
+		return err
+	}
+	return nil
+}
+
+// parseResolve parses a --resolve value in the form "host:port:addr".
+func parseResolve(value string) (host, port, addr string, err error) {
+	parts := strings.SplitN(value, ":", 3)
+	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+		return "", "", "", fmt.Errorf("invalid --resolve value: %q (expected host:port:addr)", value)
+	}
+	return parts[0], parts[1], parts[2], nil
+}

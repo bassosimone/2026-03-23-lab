@@ -32,8 +32,7 @@ func (sw *sseWriter) Write(p []byte) (int, error) {
 	sw.mu.Lock()
 	defer sw.mu.Unlock()
 	encoded := base64.StdEncoding.EncodeToString(p)
-	_, err := fmt.Fprintf(sw.w, "event: %s\ndata: %s\n\n", sw.event, encoded)
-	if err != nil {
+	if _, err := fmt.Fprintf(sw.w, "event: %s\ndata: %s\n\n", sw.event, encoded); err != nil {
 		return 0, err
 	}
 	if f, ok := sw.w.(http.Flusher); ok {

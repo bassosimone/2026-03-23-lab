@@ -83,6 +83,9 @@ func (s *Simulation) RunCommand(ctx context.Context, params *RunCommandParams) e
 	}
 
 	switch params.Argv[0] {
+	case "curl":
+		return s.runCurl(ctx, params)
+
 	case "host":
 		return s.runHost(ctx, params)
 
