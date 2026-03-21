@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <title>Console</title>
 <link rel="stylesheet" href="/deps/xterm/5.5.0/xterm.css">
+<link rel="stylesheet" href="/widgets/console.css">
 
 <style>
   body {
@@ -16,247 +17,21 @@
     justify-content: center;
     height: 100vh;
   }
-  #terminal {
+  #console {
     width: 90vw;
     height: 85vh;
-    padding: 10px;
-    background: #fff;
-    border-radius: 6px;
   }
 </style>
 
 </head>
 <body>
-<div id="terminal"></div>
+<div id="console"></div>
 
 <script src="/deps/xterm/5.5.0/xterm.js"></script>
+<script src="/widgets/console.js"></script>
 
 <script>
-"use strict";
-
-const term = new Terminal({
-  cursorBlink: true,
-  fontFamily: "'Ubuntu Mono', 'Courier New', monospace",
-  fontSize: 28,
-  theme: {
-    background: "#ffffff",
-    foreground: "#000000",
-    cursor: "#000000",
-    cursorAccent: "#ffffff",
-    selectionBackground: "#b0c4de",
-  },
-});
-term.open(document.getElementById("terminal"));
-
-// Resize terminal to fill the window.
-function fitTerminal() {
-  const container = document.getElementById("terminal");
-  const core = term._core;
-  const cellWidth = core._renderService.dimensions.css.cell.width;
-  const cellHeight = core._renderService.dimensions.css.cell.height;
-  if (cellWidth > 0 && cellHeight > 0) {
-    const cols = Math.floor(container.clientWidth / cellWidth);
-    const rows = Math.floor(container.clientHeight / cellHeight);
-    term.resize(cols, rows);
-  }
-}
-fitTerminal();
-window.addEventListener("resize", fitTerminal);
-
-const PROMPT = "$ ";
-let line = "";
-let cursor = 0;
-let running = false;
-let abortController = null;
-const history = [];
-let historyIndex = -1;
-
-function showPrompt() {
-  term.write("\r\n" + PROMPT);
-  line = "";
-  cursor = 0;
-  historyIndex = -1;
-}
-
-// Erase the current input and replace it with newLine.
-function replaceLine(newLine) {
-  // Move cursor to start of input and clear to end of line.
-  if (cursor > 0) {
-    term.write("\x1b[" + cursor + "D");
-  }
-  term.write("\x1b[0K");
-  line = newLine;
-  cursor = line.length;
-  term.write(line);
-}
-
-// Run a command by POSTing to /api/run and streaming SSE output.
-async function runCommand(command) {
-  running = true;
-  abortController = new AbortController();
-  try {
-    const resp = await fetch("/api/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ command }),
-      signal: abortController.signal,
-    });
-    if (!resp.ok) {
-      const text = await resp.text();
-      term.write("\r\nerror: " + text);
-      showPrompt();
-      return;
-    }
-
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-
-      // Process complete SSE events (separated by double newline).
-      const parts = buffer.split("\n\n");
-      buffer = parts.pop(); // keep incomplete tail
-
-      for (const part of parts) {
-        if (!part.trim()) continue;
-        let event = "";
-        let data = "";
-        for (const line of part.split("\n")) {
-          if (line.startsWith("event: ")) event = line.slice(7);
-          else if (line.startsWith("data: ")) data = line.slice(6);
-        }
-
-        if (event === "stdout" || event === "stderr") {
-          const bytes = atob(data);
-          // xterm.js needs \r\n for proper line breaks
-          term.write(bytes.replaceAll("\n", "\r\n"));
-        }
-        // exitcode event: we just stop
-      }
-    }
-  } catch (err) {
-    if (err.name !== "AbortError") {
-      term.write("\r\nerror: " + err.message);
-    }
-  } finally {
-    abortController = null;
-    running = false;
-    showPrompt();
-  }
-}
-
-// Handle keyboard input.
-term.onData((data) => {
-  // Ctrl+C while a command is running: abort it.
-  if (running) {
-    if (data === "\x03" && abortController) {
-      term.write("^C");
-      abortController.abort();
-    }
-    return;
-  }
-
-  // Handle escape sequences (arrow keys).
-  if (data === "\x1b[A") {
-    // Up arrow
-    if (history.length > 0) {
-      if (historyIndex === -1) {
-        historyIndex = history.length - 1;
-      } else if (historyIndex > 0) {
-        historyIndex--;
-      }
-      replaceLine(history[historyIndex]);
-    }
-    return;
-  }
-  if (data === "\x1b[B") {
-    // Down arrow
-    if (historyIndex !== -1) {
-      if (historyIndex < history.length - 1) {
-        historyIndex++;
-        replaceLine(history[historyIndex]);
-      } else {
-        historyIndex = -1;
-        replaceLine("");
-      }
-    }
-    return;
-  }
-  if (data === "\x1b[C") {
-    // Right arrow
-    if (cursor < line.length) {
-      cursor++;
-      term.write(data);
-    }
-    return;
-  }
-  if (data === "\x1b[D") {
-    // Left arrow
-    if (cursor > 0) {
-      cursor--;
-      term.write(data);
-    }
-    return;
-  }
-
-  for (const ch of data) {
-    if (ch === "\r") {
-      // Enter
-      term.write("\r\n");
-      const trimmed = line.trim();
-      if (trimmed.length > 0) {
-        history.push(trimmed);
-        if (trimmed === "clear") {
-          term.clear();
-          term.write(PROMPT);
-          line = "";
-          historyIndex = -1;
-        } else {
-          runCommand(trimmed);
-        }
-      } else {
-        term.write(PROMPT);
-      }
-      line = "";
-    } else if (ch === "\x0c") {
-      // Ctrl+L: clear screen, rewrite prompt and current input
-      term.clear();
-      term.write("\x1b[H" + PROMPT + line);
-    } else if (ch === "\x7f" || ch === "\b") {
-      // Backspace
-      if (cursor > 0) {
-        const tail = line.slice(cursor);
-        line = line.slice(0, cursor - 1) + tail;
-        cursor--;
-        term.write("\b" + tail + " " + "\x1b[" + (tail.length + 1) + "D");
-      }
-    } else if (ch === "\x03") {
-      // Ctrl+C
-      line = "";
-      cursor = 0;
-      term.write("^C");
-      showPrompt();
-    } else if (ch >= " ") {
-      // Printable character: insert at cursor position
-      const tail = line.slice(cursor);
-      line = line.slice(0, cursor) + ch + tail;
-      cursor++;
-      term.write(ch + tail);
-      if (tail.length > 0) {
-        term.write("\x1b[" + tail.length + "D");
-      }
-    }
-  }
-});
-
-// Show initial prompt.
-term.write("Censorship Lab Console\r\n");
-term.write("Type a command (e.g., host www.example.com)\r\n");
-showPrompt();
+new Console(document.getElementById("console"));
 </script>
 
 </body>
