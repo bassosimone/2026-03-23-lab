@@ -22,6 +22,9 @@ type Handler struct {
 	// dpi is the DPI engine for adding/clearing rules.
 	dpi *vis.DPIEngine
 
+	// dpiDir is the directory containing DPI preset files.
+	dpiDir string
+
 	// pktlog is the packet event logger.
 	pktlog *pktlog.Logger
 
@@ -30,8 +33,8 @@ type Handler struct {
 }
 
 // NewHandler creates a new [*Handler].
-func NewHandler(runner *command.Runner, dpi *vis.DPIEngine, pktlog *pktlog.Logger) *Handler {
-	return &Handler{dpi: dpi, pktlog: pktlog, runner: runner}
+func NewHandler(runner *command.Runner, dpi *vis.DPIEngine, pktlog *pktlog.Logger, dpiDir string) *Handler {
+	return &Handler{dpi: dpi, dpiDir: dpiDir, pktlog: pktlog, runner: runner}
 }
 
 // Register registers the API routes on the given [*http.ServeMux].
@@ -39,19 +42,29 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/pktlog", h.handleGetPktlog)
 	mux.HandleFunc("DELETE /api/pktlog", h.handleDeletePktlog)
 	mux.HandleFunc("POST /api/dpi", h.handleDPI)
+	mux.HandleFunc("GET /api/presets/dpi", h.handleListDPIPresets)
+	mux.HandleFunc("GET /api/presets/dpi/{name}", h.handleGetDPIPreset)
 	mux.HandleFunc("POST /api/run", h.handleRun)
 }
 
+// dpiPreset is the JSON envelope for a DPI preset file.
+type dpiPreset struct {
+	// Description is the human-readable description of the preset.
+	Description string `json:"description"`
+
+	// Rules is the list of DPI rule envelopes.
+	Rules []dpiRuleEnvelope `json:"rules"`
+}
+
 // handleDPI handles POST /api/dpi by replacing the DPI ruleset.
-// The request body is a JSON array of rule envelopes. An empty
-// array clears all rules.
+// The request body is a JSON object with "description" and "rules" fields.
 func (h *Handler) handleDPI(w http.ResponseWriter, r *http.Request) {
-	var envelopes []dpiRuleEnvelope
-	if err := json.NewDecoder(r.Body).Decode(&envelopes); err != nil {
+	var preset dpiPreset
+	if err := json.NewDecoder(r.Body).Decode(&preset); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := applyDPIRules(h.dpi, envelopes); err != nil {
+	if err := applyDPIRules(h.dpi, preset.Rules); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

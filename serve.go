@@ -47,7 +47,7 @@ func serveMain(ctx context.Context, args []string) error {
 
 	// Create the HTTP API handler and register routes.
 	mux := http.NewServeMux()
-	handler := httpapi.NewHandler(runner, dpi, logger)
+	handler := httpapi.NewHandler(runner, dpi, logger, filepath.Join(datadir, "dpi"))
 	handler.Register(mux)
 	mux.Handle("/", http.FileServer(http.Dir("static")))
 

@@ -1,9 +1,12 @@
-[
-  {
-    "type": "dns",
-    "rule": {
-      "domain": "www.example.com",
-      "addresses": ["10.0.0.1"]
+{
+  "description": "DNS spoofing: redirect www.example.com to 10.0.0.1",
+  "rules": [
+    {
+      "type": "dns",
+      "rule": {
+        "domain": "www.example.com",
+        "addresses": ["10.0.0.1"]
+      }
     }
-  }
-]
+  ]
+}

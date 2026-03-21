@@ -1,10 +1,13 @@
-[
-  {
-    "type": "tcp",
-    "rule": {
-      "action": "drop",
-      "server_addr": "104.18.26.120",
-      "server_port": 443
+{
+  "description": "TCP drop: silently drop HTTPS connections to www.example.com",
+  "rules": [
+    {
+      "type": "tcp",
+      "rule": {
+        "action": "drop",
+        "server_addr": "104.18.26.120",
+        "server_port": 443
+      }
     }
-  }
-]
+  ]
+}
