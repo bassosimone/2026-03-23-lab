@@ -16,6 +16,21 @@ import (
 	"github.com/bassosimone/uis"
 )
 
+// PacketEvent describes when a [RouterHook] is called.
+type PacketEvent int
+
+const (
+	// PacketEntered means the packet just entered the router.
+	PacketEntered PacketEvent = iota
+
+	// PacketDelivered means the packet is being delivered.
+	PacketDelivered
+)
+
+// RouterHook is called by the [*Router] for every packet at two
+// points in its lifecycle. The packet bytes MUST NOT be modified.
+type RouterHook func(PacketEvent, []byte)
+
 // Router is a packet router for [*uis.Internet] with optional
 // DPI and propagation delay. Every packet gets a uniform jitter
 // distributed in the 1–2000µs interval.
@@ -28,6 +43,9 @@ type Router struct {
 
 	// engine is the optional DPI engine for inspecting packets.
 	engine *DPIEngine
+
+	// hook is the optional packet observer called on enter and deliver.
+	hook RouterHook
 }
 
 // RouterOption configures a [*Router].
@@ -44,6 +62,13 @@ func RouterOptionDelay(d time.Duration) RouterOption {
 func RouterOptionDPI(engine *DPIEngine) RouterOption {
 	return func(r *Router) {
 		r.engine = engine
+	}
+}
+
+// RouterOptionHook sets the packet observer hook.
+func RouterOptionHook(hook RouterHook) RouterOption {
+	return func(r *Router) {
+		r.hook = hook
 	}
 }
 
@@ -79,6 +104,11 @@ func (r *Router) Route(ctx context.Context, ix *uis.Internet) {
 
 		// 2. We received a new packet to deliver.
 		case frame := <-ix.InFlight():
+			// Notify the hook that a packet entered the router.
+			if r.hook != nil {
+				r.hook(PacketEntered, frame.Packet)
+			}
+
 			// Every packet gets base delay plus random jitter (1–2000µs) so that
 			// any DPI rule always takes deterministic precedence.
 			totalDelay := r.delay + time.Duration(1+rand.IntN(2000))*time.Microsecond
@@ -117,6 +147,9 @@ func (r *Router) Route(ctx context.Context, ix *uis.Internet) {
 					break
 				}
 				entry := heap.Pop(&pending).(deliveryEntry)
+				if r.hook != nil {
+					r.hook(PacketDelivered, entry.frame.Packet)
+				}
 				ix.Deliver(entry.frame)
 			}
 
