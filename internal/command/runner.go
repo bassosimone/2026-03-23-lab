@@ -60,6 +60,7 @@ func (r *Runner) Run(ctx context.Context, params *Params) error {
 		return r.runHost(ctx, params)
 
 	default:
+		fmt.Fprintf(params.Stderr, "%s: command not found\n", params.Argv[0])
 		return fmt.Errorf("%w: %s", ErrUnknownCommand, params.Argv[0])
 	}
 }
