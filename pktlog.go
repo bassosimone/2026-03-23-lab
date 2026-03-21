@@ -61,7 +61,7 @@ func pktlogGetMain(ctx context.Context, args []string) error {
 	var addr string
 	var output string
 	fset.StringVar(&datadir, 'd', "datadir", "The `DIR` containing the server URL file.")
-	fset.StringVar(&format, 0, "format", "Output `FORMAT` (pcap).")
+	fset.StringVar(&format, 0, "format", "Output `FORMAT` (json, pcap).")
 	fset.StringVar(&addr, 0, "addr", "Filter by `IP` address perspective.")
 	fset.StringVar(&output, 'o', "output", "Write to `FILE` instead of stdout.")
 	fset.AutoHelp('h', "help", "Print this help message and exit.")
@@ -69,6 +69,8 @@ func pktlogGetMain(ctx context.Context, args []string) error {
 
 	// Validate format-specific constraints.
 	switch format {
+	case "json":
+		// addr is optional for json format
 	case "pcap":
 		if addr == "" {
 			runtimex.LogFatalOnError0(fmt.Errorf("pcap format requires --addr"))
@@ -101,10 +103,16 @@ func pktlogGetMain(ctx context.Context, args []string) error {
 		runtimex.LogFatalOnError0(fmt.Errorf("server returned %s", resp.Status))
 	}
 
-	// Write the response body to the output file.
-	fp := runtimex.LogFatalOnError1(os.Create(output))
-	defer fp.Close()
-	runtimex.LogFatalOnError1(io.Copy(fp, resp.Body))
+	// Write the response body to the output destination.
+	var dst io.Writer
+	if output != "" {
+		fp := runtimex.LogFatalOnError1(os.Create(output))
+		defer fp.Close()
+		dst = fp
+	} else {
+		dst = os.Stdout
+	}
+	runtimex.LogFatalOnError1(io.Copy(dst, resp.Body))
 	return nil
 }
 

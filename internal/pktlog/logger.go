@@ -72,6 +72,11 @@ func (l *Logger) Entries() []Entry {
 	return out
 }
 
+// Capacity returns the maximum number of entries the logger can store.
+func (l *Logger) Capacity() int {
+	return l.maxEntries
+}
+
 // Clear removes all recorded entries.
 func (l *Logger) Clear() {
 	l.mu.Lock()
