@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Packets</title>
+
+<style>
+  body {
+    margin: 0;
+    background: #808080;
+    font-family: 'Ubuntu Mono', 'Courier New', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  #panel {
+    width: 95vw;
+    height: 90vh;
+    background: #fff;
+    border-radius: 6px;
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  #controls button {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 6px 12px;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    background: #f0f0f0;
+    cursor: pointer;
+  }
+  #controls button:hover {
+    background: #ddd;
+  }
+  #controls button.active {
+    background: #2a7ae2;
+    color: #fff;
+    border-color: #2a7ae2;
+  }
+  #controls .separator {
+    width: 1px;
+    height: 24px;
+    background: #ccc;
+    margin: 0 4px;
+  }
+  #status {
+    font-size: 13px;
+    color: #555;
+    margin-left: auto;
+  }
+  #status.full {
+    color: #c00;
+    font-weight: bold;
+  }
+  #table-container {
+    flex: 1;
+    overflow-y: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: #f5f5f5;
+    border-bottom: 2px solid #ccc;
+    text-align: left;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 3px 8px;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+  }
+  tbody tr:hover {
+    background: #f0f5ff;
+  }
+  tbody tr.entered {
+    background: #e8f5e9;
+  }
+  tbody tr.delivered {
+    background: #e3f2fd;
+  }
+  tbody tr.rst {
+    background: #ffebee;
+    color: #c00;
+  }
+</style>
+
+</head>
+<body>
+<div id="panel">
+  <div id="controls">
+    <button class="active" data-addr="">All</button>
+    <button data-addr="130.192.91.211">Client</button>
+    <button data-addr="104.18.26.120">Server</button>
+    <button data-addr="130.192.3.21">DNS polito</button>
+    <button data-addr="8.8.8.8">DNS google</button>
+    <div class="separator"></div>
+    <button id="btn-refresh">Refresh</button>
+    <button id="btn-clear">Clear</button>
+    <span id="status"></span>
+  </div>
+  <div id="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Time</th>
+          <th>Event</th>
+          <th>Source</th>
+          <th>Destination</th>
+          <th>Protocol</th>
+          <th>Length</th>
+          <th>Info</th>
+        </tr>
+      </thead>
+      <tbody id="packets"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+let currentAddr = "";
+
+// Perspective buttons.
+const perspectiveButtons = document.querySelectorAll("#controls button[data-addr]");
+for (const btn of perspectiveButtons) {
+  btn.addEventListener("click", () => {
+    currentAddr = btn.dataset.addr;
+    for (const b of perspectiveButtons) {
+      b.classList.toggle("active", b === btn);
+    }
+    refresh();
+  });
+}
+
+document.getElementById("btn-refresh").addEventListener("click", refresh);
+
+document.getElementById("btn-clear").addEventListener("click", async () => {
+  await fetch("/api/pktlog", { method: "DELETE" });
+  refresh();
+});
+
+async function refresh() {
+  let url = "/api/pktlog?format=json";
+  if (currentAddr) {
+    url += "&addr=" + encodeURIComponent(currentAddr);
+  }
+
+  const resp = await fetch(url);
+  if (!resp.ok) {
+    document.getElementById("status").textContent = "Error: " + resp.statusText;
+    return;
+  }
+
+  const data = await resp.json();
+
+  // Update status.
+  const statusEl = document.getElementById("status");
+  statusEl.textContent = data.count + " / " + data.capacity + " packets";
+  statusEl.classList.toggle("full", data.count >= data.capacity);
+
+  // Update table.
+  const tbody = document.getElementById("packets");
+  tbody.innerHTML = "";
+
+  if (!data.packets || data.packets.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 8;
+    td.style.textAlign = "center";
+    td.style.color = "#999";
+    td.style.padding = "20px";
+    td.textContent = "No packets captured.";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  for (const pkt of data.packets) {
+    const tr = document.createElement("tr");
+
+    // Color by event, but RST overrides.
+    if (pkt.flags && pkt.flags.includes("RST")) {
+      tr.className = "rst";
+    } else {
+      tr.className = pkt.event;
+    }
+
+    const cells = [
+      pkt.number,
+      pkt.time,
+      pkt.event,
+      pkt.src,
+      pkt.dst,
+      pkt.protocol,
+      pkt.length,
+      pkt.info,
+    ];
+    for (const value of cells) {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+}
+
+// Initial load.
+refresh();
+</script>
+
+</body>
+</html>
