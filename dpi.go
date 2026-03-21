@@ -7,9 +7,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
@@ -26,15 +25,15 @@ func dpiMain(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(fset.Parse(args))
 
 	// Read the server base URL.
-	urlData := runtimex.LogFatalOnError1(os.ReadFile(filepath.Join(datadir, "url.txt")))
-	baseURL := strings.TrimSpace(string(urlData))
+	baseURL := readBaseURL(datadir)
 
 	// Read the JSON rules file.
 	body := runtimex.LogFatalOnError1(os.ReadFile(fset.Args()[0]))
 
 	// POST to the /api/dpi endpoint.
+	reqURL := runtimex.LogFatalOnError1(url.JoinPath(baseURL, "api/dpi"))
 	req := runtimex.LogFatalOnError1(http.NewRequestWithContext(
-		ctx, http.MethodPost, baseURL+"api/dpi", bytes.NewReader(body),
+		ctx, http.MethodPost, reqURL, bytes.NewReader(body),
 	))
 	req.Header.Set("Content-Type", "application/json")
 	resp := runtimex.LogFatalOnError1(http.DefaultClient.Do(req))

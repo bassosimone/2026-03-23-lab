@@ -15,6 +15,7 @@ func main() {
 	disp.AddDescription("Internet censorship simulation.")
 
 	disp.AddCommand("dpi", vclip.CommandFunc(dpiMain), "Set DPI rules from a JSON file.")
+	disp.AddCommand("pktlog", pktlogCommand(), "Interact with the packet log.")
 	disp.AddCommand("run", vclip.CommandFunc(runMain), "Run a command inside the simulation.")
 	disp.AddCommand("serve", vclip.CommandFunc(serveMain), "Start the simulation HTTP API server.")
 

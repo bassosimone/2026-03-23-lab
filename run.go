@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -32,8 +32,7 @@ func runMain(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(fset.Parse(args))
 
 	// Read the server base URL.
-	urlData := runtimex.LogFatalOnError1(os.ReadFile(filepath.Join(datadir, "url.txt")))
-	baseURL := strings.TrimSpace(string(urlData))
+	baseURL := readBaseURL(datadir)
 
 	// Build the JSON request body.
 	body := runtimex.LogFatalOnError1(json.Marshal(struct {
@@ -41,8 +40,9 @@ func runMain(ctx context.Context, args []string) error {
 	}{Argv: fset.Args()}))
 
 	// POST to the /api/run endpoint.
+	reqURL := runtimex.LogFatalOnError1(url.JoinPath(baseURL, "api/run"))
 	req := runtimex.LogFatalOnError1(http.NewRequestWithContext(
-		ctx, http.MethodPost, baseURL+"api/run", bytes.NewReader(body),
+		ctx, http.MethodPost, reqURL, bytes.NewReader(body),
 	))
 	req.Header.Set("Content-Type", "application/json")
 	resp := runtimex.LogFatalOnError1(http.DefaultClient.Do(req))
