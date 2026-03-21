@@ -24,7 +24,7 @@ func serveMain(ctx context.Context, args []string) error {
 	// Parse flags.
 	fset := vflag.NewFlagSet("2026-03-23-lab serve", vflag.ExitOnError)
 	addr := "127.0.0.1:0"
-	datadir := "testdata"
+	datadir := "data"
 	fset.StringVar(&addr, 0, "addr", "The `ADDRESS` to listen on.")
 	fset.StringVar(&datadir, 'd', "datadir", "The `DIR` for cached PKI certificates.")
 	fset.AutoHelp('h', "help", "Print this help message and exit.")

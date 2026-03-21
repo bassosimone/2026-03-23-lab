@@ -17,7 +17,7 @@ import (
 func dpiMain(ctx context.Context, args []string) error {
 	// Parse flags.
 	fset := vflag.NewFlagSet("2026-03-23-lab dpi", vflag.ExitOnError)
-	datadir := "testdata"
+	datadir := "data"
 	fset.StringVar(&datadir, 'd', "datadir", "The `DIR` containing the server URL file.")
 	fset.AutoHelp('h', "help", "Print this help message and exit.")
 	fset.MinPositionalArgs = 1
