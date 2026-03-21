@@ -28,6 +28,7 @@ func runMain(ctx context.Context, args []string) error {
 	fset.AutoHelp('h', "help", "Print this help message and exit.")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = math.MaxInt
+	fset.DisablePermute = true
 	runtimex.PanicOnError0(fset.Parse(args))
 
 	// Read the server base URL.
