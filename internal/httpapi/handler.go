@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/bassosimone/2026-03-23-lab/internal/command"
+	"github.com/bassosimone/2026-03-23-lab/internal/pktlog"
 	"github.com/bassosimone/2026-03-23-lab/internal/vis"
 )
 
@@ -20,17 +21,22 @@ type Handler struct {
 	// dpi is the DPI engine for adding/clearing rules.
 	dpi *vis.DPIEngine
 
+	// pktlog is the packet event logger.
+	pktlog *pktlog.Logger
+
 	// runner executes commands against the simulation.
 	runner *command.Runner
 }
 
 // NewHandler creates a new [*Handler].
-func NewHandler(runner *command.Runner, dpi *vis.DPIEngine) *Handler {
-	return &Handler{dpi: dpi, runner: runner}
+func NewHandler(runner *command.Runner, dpi *vis.DPIEngine, pktlog *pktlog.Logger) *Handler {
+	return &Handler{dpi: dpi, pktlog: pktlog, runner: runner}
 }
 
 // Register registers the API routes on the given [*http.ServeMux].
 func (h *Handler) Register(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/pktlog", h.handleGetPktlog)
+	mux.HandleFunc("DELETE /api/pktlog", h.handleDeletePktlog)
 	mux.HandleFunc("POST /api/dpi", h.handleDPI)
 	mux.HandleFunc("POST /api/run", h.handleRun)
 }

@@ -46,7 +46,7 @@ func serveMain(ctx context.Context, args []string) error {
 
 	// Create the HTTP API handler and register routes.
 	mux := http.NewServeMux()
-	handler := httpapi.NewHandler(runner, dpi)
+	handler := httpapi.NewHandler(runner, dpi, logger)
 	handler.Register(mux)
 
 	// Start listening and save the base URL for clients to discover.
