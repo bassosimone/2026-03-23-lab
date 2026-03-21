@@ -18,6 +18,7 @@ import (
 
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
+	shellquote "github.com/kballard/go-shellquote"
 )
 
 func runMain(ctx context.Context, args []string) error {
@@ -36,8 +37,8 @@ func runMain(ctx context.Context, args []string) error {
 
 	// Build the JSON request body.
 	body := runtimex.LogFatalOnError1(json.Marshal(struct {
-		Argv []string `json:"argv"`
-	}{Argv: fset.Args()}))
+		Command string `json:"command"`
+	}{Command: shellquote.Join(fset.Args()...)}))
 
 	// POST to the /api/run endpoint.
 	reqURL := runtimex.LogFatalOnError1(url.JoinPath(baseURL, "api/run"))

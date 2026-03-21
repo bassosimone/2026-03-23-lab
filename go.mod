@@ -12,6 +12,7 @@ require (
 	github.com/bassosimone/vclip v0.0.0-20260307133721-977dc994815e
 	github.com/bassosimone/vflag v0.0.0-20260212194245-b765f86a69b9
 	github.com/google/gopacket v1.1.19
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/miekg/dns v1.1.72
 )
 

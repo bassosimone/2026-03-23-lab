@@ -12,6 +12,7 @@ import (
 	"github.com/bassosimone/2026-03-23-lab/internal/command"
 	"github.com/bassosimone/2026-03-23-lab/internal/pktlog"
 	"github.com/bassosimone/2026-03-23-lab/internal/vis"
+	shellquote "github.com/kballard/go-shellquote"
 )
 
 // Handler is the HTTP API handler for the simulation.
@@ -59,8 +60,8 @@ func (h *Handler) handleDPI(w http.ResponseWriter, r *http.Request) {
 
 // runRequest is the JSON request body for the /api/run endpoint.
 type runRequest struct {
-	// Argv is the command line to execute.
-	Argv []string `json:"argv"`
+	// Command is the shell command line to execute.
+	Command string `json:"command"`
 }
 
 // handleRun handles POST /api/run by running a command inside the
@@ -69,6 +70,11 @@ func (h *Handler) handleRun(w http.ResponseWriter, r *http.Request) {
 	// Parse the request body.
 	var req runRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	argv, err := shellquote.Split(req.Command)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -112,17 +118,17 @@ func (h *Handler) handleRun(w http.ResponseWriter, r *http.Request) {
 	stderr := &sseWriter{w: pw, mu: mu, event: "stderr"}
 
 	// Run the command.
-	err := h.runner.Run(r.Context(), &command.Params{
-		Argv:   req.Argv,
+	exitcode := 0
+	params := command.Params{
+		Argv:   argv,
 		Stdout: stdout,
 		Stderr: stderr,
-	})
-
-	// Send the exit code through the pipe.
-	exitcode := 0
-	if err != nil {
+	}
+	if err := h.runner.Run(r.Context(), &params); err != nil {
 		exitcode = 1
 	}
+
+	// Send the exitcode through the pipe
 	fmt.Fprintf(pw, "event: exitcode\ndata: %d\n\n", exitcode)
 
 	// Close the pipe writer. This causes the reader goroutine to see

@@ -97,4 +97,3 @@ func filterByPerspective(entries []pktlog.Entry, addr netip.Addr) []pktlog.Entry
 	}
 	return filtered
 }
-

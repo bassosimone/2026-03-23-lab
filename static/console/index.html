@@ -90,43 +90,15 @@ function replaceLine(newLine) {
   term.write(line);
 }
 
-// Parse a command line into argv, respecting simple quoting.
-function parseArgv(input) {
-  const args = [];
-  let current = "";
-  let inSingle = false;
-  let inDouble = false;
-
-  for (let i = 0; i < input.length; i++) {
-    const ch = input[i];
-    if (ch === "'" && !inDouble) {
-      inSingle = !inSingle;
-    } else if (ch === '"' && !inSingle) {
-      inDouble = !inDouble;
-    } else if (ch === " " && !inSingle && !inDouble) {
-      if (current.length > 0) {
-        args.push(current);
-        current = "";
-      }
-    } else {
-      current += ch;
-    }
-  }
-  if (current.length > 0) {
-    args.push(current);
-  }
-  return args;
-}
-
 // Run a command by POSTing to /api/run and streaming SSE output.
-async function runCommand(argv) {
+async function runCommand(command) {
   running = true;
   abortController = new AbortController();
   try {
     const resp = await fetch("/api/run", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ argv }),
+      body: JSON.stringify({ command }),
       signal: abortController.signal,
     });
     if (!resp.ok) {
@@ -244,8 +216,7 @@ term.onData((data) => {
           line = "";
           historyIndex = -1;
         } else {
-          const argv = parseArgv(trimmed);
-          runCommand(argv);
+          runCommand(trimmed);
         }
       } else {
         term.write(PROMPT);
