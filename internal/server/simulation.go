@@ -86,6 +86,9 @@ func (s *Simulation) RunCommand(ctx context.Context, params *RunCommandParams) e
 	case "curl":
 		return s.runCurl(ctx, params)
 
+	case "dig":
+		return s.runDig(ctx, params)
+
 	case "host":
 		return s.runHost(ctx, params)
 
