@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Censorship Policy</title>
+
+<style>
+  body {
+    margin: 0;
+    background: #808080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: 'Ubuntu Mono', 'Courier New', monospace;
+  }
+  #panel {
+    width: 90vw;
+    max-width: 800px;
+    background: #fff;
+    border-radius: 6px;
+    padding: 30px;
+  }
+  h1 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+  }
+  p.subtitle {
+    margin: 0 0 25px 0;
+    color: #555;
+    font-size: 16px;
+  }
+  .preset {
+    display: block;
+    width: 100%;
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background: #fafafa;
+    font-family: inherit;
+    font-size: 18px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .preset:hover {
+    border-color: #888;
+    background: #f0f0f0;
+  }
+  .preset.active {
+    border-color: #2a7ae2;
+    background: #e8f0fe;
+  }
+  .preset .name {
+    font-weight: bold;
+  }
+  .preset .description {
+    color: #555;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  #status {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #555;
+  }
+</style>
+
+</head>
+<body>
+<div id="panel">
+  <h1>Censorship Policy</h1>
+  <p class="subtitle">Select the active DPI filtering regime.</p>
+  <div id="presets"></div>
+  <div id="status"></div>
+</div>
+
+<script>
+"use strict";
+
+let activeName = "";
+
+async function loadPresets() {
+  const [presetsResp, dpiResp] = await Promise.all([
+    fetch("/api/presets/dpi"),
+    fetch("/api/dpi"),
+  ]);
+  const presets = await presetsResp.json();
+  const dpi = await dpiResp.json();
+  activeName = dpi.name || "";
+
+  const container = document.getElementById("presets");
+  container.innerHTML = "";
+
+  for (const preset of presets) {
+    const btn = document.createElement("button");
+    btn.className = "preset" + (preset.name === activeName ? " active" : "");
+    btn.innerHTML =
+      '<div class="name">' + escapeHTML(preset.name) + '</div>' +
+      '<div class="description">' + escapeHTML(preset.description) + '</div>';
+    btn.addEventListener("click", () => applyPreset(preset.name));
+    container.appendChild(btn);
+  }
+}
+
+async function applyPreset(name) {
+  const status = document.getElementById("status");
+  status.textContent = "Applying " + name + "...";
+
+  const resp = await fetch("/api/presets/dpi/" + encodeURIComponent(name) + "/apply", {
+    method: "POST",
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    status.textContent = "Error: " + text;
+    return;
+  }
+
+  activeName = name;
+  status.textContent = "Active: " + name;
+
+  // Update button highlights.
+  for (const btn of document.querySelectorAll(".preset")) {
+    const btnName = btn.querySelector(".name").textContent;
+    btn.classList.toggle("active", btnName === name);
+  }
+}
+
+function escapeHTML(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+loadPresets();
+</script>
+
+</body>
+</html>
