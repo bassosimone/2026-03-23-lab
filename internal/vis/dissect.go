@@ -162,7 +162,6 @@ func (dp *DissectedPacket) MatchesDestination(proto layers.IPProtocol, addr neti
 	return dp.DestinationPort() == port
 }
 
-
 // FlowHash returns a hash uniquely identifying the transport flow.
 // Both directions of a flow produce the same hash.
 func (dp *DissectedPacket) FlowHash() uint64 {
