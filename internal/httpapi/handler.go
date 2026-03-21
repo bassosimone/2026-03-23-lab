@@ -5,6 +5,7 @@ package httpapi
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"sync"
 
@@ -51,11 +52,37 @@ func (h *Handler) handleRun(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 	w.WriteHeader(http.StatusOK)
 
+	// Use an io.Pipe to decouple the command's writers from the
+	// response writer. Background goroutines (e.g., stale transport
+	// dial goroutines) that outlive this handler will get
+	// io.ErrClosedPipe instead of panicking on a dead ResponseWriter.
+	pr, pw := io.Pipe()
+
+	// Reader goroutine: copy from pipe to response writer, flushing after
+	// each read to ensure SSE events are delivered immediately.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		buf := make([]byte, 32*1024)
+		for {
+			n, err := pr.Read(buf)
+			if n > 0 {
+				w.Write(buf[:n])
+				if f, ok := w.(http.Flusher); ok {
+					f.Flush()
+				}
+			}
+			if err != nil {
+				return
+			}
+		}
+	}()
+
 	// Create SSE writers for stdout and stderr. They share
-	// a mutex to serialize concurrent writes to the response.
+	// a mutex to serialize concurrent writes to the pipe.
 	mu := &sync.Mutex{}
-	stdout := &sseWriter{w: w, mu: mu, event: "stdout"}
-	stderr := &sseWriter{w: w, mu: mu, event: "stderr"}
+	stdout := &sseWriter{w: pw, mu: mu, event: "stdout"}
+	stderr := &sseWriter{w: pw, mu: mu, event: "stderr"}
 
 	// Run the command.
 	err := h.sim.RunCommand(r.Context(), &server.RunCommandParams{
@@ -64,15 +91,16 @@ func (h *Handler) handleRun(w http.ResponseWriter, r *http.Request) {
 		Stderr: stderr,
 	})
 
-	// Send the exit code.
+	// Send the exit code through the pipe.
 	exitcode := 0
 	if err != nil {
 		exitcode = 1
 	}
-	fmt.Fprintf(w, "event: exitcode\ndata: %d\n\n", exitcode)
+	fmt.Fprintf(pw, "event: exitcode\ndata: %d\n\n", exitcode)
 
-	// Flush if the writer supports it.
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
-	}
+	// Close the pipe writer. This causes the reader goroutine to see
+	// EOF and stop. Any stale background goroutine that still holds
+	// a reference to stdout/stderr will get io.ErrClosedPipe.
+	pw.Close()
+	<-done
 }
