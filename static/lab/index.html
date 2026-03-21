@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Censorship Lab</title>
+<link rel="stylesheet" href="/deps/xterm/5.5.0/xterm.css">
+<link rel="stylesheet" href="/widgets/console.css">
+<link rel="stylesheet" href="/widgets/censorship.css">
+<link rel="stylesheet" href="/widgets/packets.css">
+
+<style>
+  body {
+    margin: 0;
+    background: #808080;
+    font-family: 'Ubuntu Mono', 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Tab bar */
+  #tabs {
+    display: flex;
+    background: #555;
+    padding: 0;
+  }
+  #tabs button {
+    font-family: inherit;
+    font-size: 16px;
+    padding: 10px 24px;
+    border: none;
+    background: #555;
+    color: #ccc;
+    cursor: pointer;
+  }
+  #tabs button:hover {
+    background: #666;
+    color: #fff;
+  }
+  #tabs button.active {
+    background: #808080;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  /* Tab content */
+  .tab-content {
+    flex: 1;
+    display: none;
+    padding: 20px;
+    overflow: hidden;
+  }
+  .tab-content.visible {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #tab-console .console-widget {
+    width: 90vw;
+    height: calc(100vh - 100px);
+  }
+  #tab-packets .packets-widget {
+    width: 95vw;
+    height: calc(100vh - 100px);
+  }
+  #tab-censorship .censorship-widget {
+    width: 90vw;
+    max-width: 800px;
+  }
+</style>
+
+</head>
+<body>
+
+<div id="tabs">
+  <button class="active" data-tab="console">Console</button>
+  <button data-tab="packets">Packets</button>
+  <button data-tab="censorship">Censorship</button>
+</div>
+
+<div id="tab-console" class="tab-content visible">
+  <div id="widget-console"></div>
+</div>
+
+<div id="tab-packets" class="tab-content">
+  <div id="widget-packets"></div>
+</div>
+
+<div id="tab-censorship" class="tab-content">
+  <div id="widget-censorship"></div>
+</div>
+
+<script src="/deps/xterm/5.5.0/xterm.js"></script>
+<script src="/widgets/console.js"></script>
+<script src="/widgets/packets.js"></script>
+<script src="/widgets/censorship.js"></script>
+
+<script>
+"use strict";
+
+// Create all widgets once.
+const consoleWidget = new Console(document.getElementById("widget-console"));
+new PacketViewer(document.getElementById("widget-packets"));
+new CensorshipPanel(document.getElementById("widget-censorship"));
+
+// Tab switching.
+const tabButtons = document.querySelectorAll("#tabs button");
+const tabPanes = document.querySelectorAll(".tab-content");
+
+for (const btn of tabButtons) {
+  btn.addEventListener("click", () => {
+    const target = btn.dataset.tab;
+
+    // Update button highlights.
+    for (const b of tabButtons) {
+      b.classList.toggle("active", b === btn);
+    }
+
+    // Show/hide panes.
+    for (const pane of tabPanes) {
+      pane.classList.toggle("visible", pane.id === "tab-" + target);
+    }
+
+    // Refit terminal when switching to console tab.
+    if (target === "console") {
+      consoleWidget.resize();
+    }
+  });
+}
+</script>
+
+</body>
+</html>

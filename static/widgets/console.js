@@ -55,6 +55,12 @@ class Console {
     this.#showPrompt();
   }
 
+  // Public: recalculates the terminal size to fit the container.
+  // Call this after the container becomes visible (e.g., tab switch).
+  resize() {
+    this.#fitTerminal();
+  }
+
   // Resizes the terminal grid (cols x rows) to fill the container,
   // using xterm.js internal cell dimensions.
   #fitTerminal() {
