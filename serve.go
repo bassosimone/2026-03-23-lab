@@ -49,6 +49,7 @@ func serveMain(ctx context.Context, args []string) error {
 	mux := http.NewServeMux()
 	handler := httpapi.NewHandler(runner, dpi, logger)
 	handler.Register(mux)
+	mux.Handle("/", http.FileServer(http.Dir("static")))
 
 	// Start listening and save the base URL for clients to discover.
 	listener := runtimex.LogFatalOnError1(net.Listen("tcp", addr))
