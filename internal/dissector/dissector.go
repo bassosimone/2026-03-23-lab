@@ -133,6 +133,9 @@ func Summarize(entry pktlog.DissectedEntry, number int) *PacketSummary {
 	}
 
 	// Build detail.
+	// TODO(bassosimone): the detail pane currently does not dissect IPv6
+	// headers — only IPv4 is supported. The summary fields (src, dst, etc.)
+	// work for both because they use DissectedPacket accessors.
 	detail := &PacketDetail{}
 	if ipv4, ok := dp.IP.(*layers.IPv4); ok {
 		detail.IP = &IPDetail{
