@@ -16,6 +16,8 @@ class TopologyMap {
   #cursor = -1;
   #statusEl;
   #infoEl;
+  #cloudPath;
+  #cloudLabel;
 
   static #SVG_NS = "http://www.w3.org/2000/svg";
   static #NODE_W = 260;
@@ -136,21 +138,29 @@ class TopologyMap {
       }
     }
 
-    // Cloud shape.
+    // Cloud shape. Store references for policy coloring.
     const cloudG = this.#svgEl("g", {
       transform: `translate(${cloudCx},${cloudCy})`,
     });
-    cloudG.appendChild(this.#svgEl("path", {
+    this.#cloudPath = this.#svgEl("path", {
       d: TopologyMap.#CLOUD_PATH,
       fill: "#f5f5f5", stroke: "#999",
       "stroke-width": 2, "stroke-dasharray": "6,4",
-    }));
+    });
+    cloudG.appendChild(this.#cloudPath);
     const label = this.#svgEl("text", {
       x: 0, y: 5,
       "text-anchor": "middle", "font-size": 16, fill: "#555",
     });
     label.textContent = "Internet";
     cloudG.appendChild(label);
+
+    // Policy name label below the cloud.
+    this.#cloudLabel = this.#svgEl("text", {
+      x: 0, y: 68,
+      "text-anchor": "middle", "font-size": 12, fill: "#666",
+    });
+    cloudG.appendChild(this.#cloudLabel);
     svg.appendChild(cloudG);
 
     // Client node.
@@ -196,16 +206,49 @@ class TopologyMap {
   // ── Packet loading & stepping ──────────────────────────
 
   async #loadPackets() {
-    try {
-      const resp = await fetch("/api/pktlog?format=json");
-      const data = await resp.json();
+    // Fetch packets and active DPI policy in parallel.
+    const [pktResp, dpiResp] = await Promise.all([
+      fetch("/api/pktlog?format=json").catch(() => null),
+      fetch("/api/dpi").catch(() => null),
+    ]);
+
+    if (pktResp) {
+      const data = await pktResp.json();
       this.#packets = data.packets || [];
-    } catch (_) {
+    } else {
       this.#packets = [];
     }
+
+    if (dpiResp) {
+      const status = await dpiResp.json();
+      this.#applyPolicy(status.name);
+    } else {
+      this.#applyPolicy("");
+    }
+
     this.#cursor = -1;
     this.#resetEdges();
     this.#updateDisplay();
+  }
+
+  // Update the cloud appearance based on the active DPI policy.
+  #applyPolicy(name) {
+    if (!name) {
+      // No policy set.
+      this.#cloudPath.setAttribute("fill", "#f5f5f5");
+      this.#cloudPath.setAttribute("stroke", "#999");
+      this.#cloudLabel.textContent = "";
+    } else if (name === "clear") {
+      this.#cloudPath.setAttribute("fill", "#eafaf1");
+      this.#cloudPath.setAttribute("stroke", "#27ae60");
+      this.#cloudLabel.textContent = name;
+      this.#cloudLabel.setAttribute("fill", "#27ae60");
+    } else {
+      this.#cloudPath.setAttribute("fill", "#fdf2f2");
+      this.#cloudPath.setAttribute("stroke", "#c0392b");
+      this.#cloudLabel.textContent = name;
+      this.#cloudLabel.setAttribute("fill", "#c0392b");
+    }
   }
 
   #step(delta) {
