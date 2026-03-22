@@ -289,6 +289,54 @@ class PacketViewer {
       ));
     }
 
+    // TLS section.
+    if (pkt.detail && pkt.detail.tls) {
+      const tls = pkt.detail.tls;
+
+      // Record header.
+      if (tls.record) {
+        this.#detailPane.appendChild(this.#makeSection(
+          "TLS Record", [
+            ["Content Type", tls.record.content_type],
+            ["Version", tls.record.version],
+            ["Length", tls.record.length],
+          ]
+        ));
+      }
+
+      // Handshake / ClientHello.
+      if (tls.handshake) {
+        const hs = tls.handshake;
+
+        const rows = [
+          ["Handshake Type", hs.type],
+          ["Version", hs.version],
+          ["Random", hs.random_length + " bytes"],
+          ["Session ID", hs.session_id_length + " bytes"],
+          ["Cipher Suites", hs.cipher_suites_count + " suites"],
+          ["Compression Methods", hs.compression_methods_count + " methods"],
+        ];
+
+        this.#detailPane.appendChild(this.#makeSection(
+          "TLS Handshake: " + hs.type, rows
+        ));
+
+        // Extensions list.
+        if (hs.extensions && hs.extensions.length > 0) {
+          const extRows = [];
+          for (const ext of hs.extensions) {
+            const label = ext.name + " (" + ext.type + ")";
+            const value = ext.value || (ext.length + " bytes");
+            extRows.push([label, value]);
+          }
+
+          this.#detailPane.appendChild(this.#makeSection(
+            "TLS Extensions (" + hs.extensions.length + ")", extRows
+          ));
+        }
+      }
+    }
+
     // DNS section.
     if (pkt.detail && pkt.detail.dns) {
       const d = pkt.detail.dns;

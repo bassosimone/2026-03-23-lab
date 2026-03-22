@@ -76,6 +76,9 @@ type PacketDetail struct {
 
 	// HTTP is the application layer HTTP detail (nil if not HTTP).
 	HTTP *HTTPDetail `json:"http,omitempty"`
+
+	// TLS is the application layer TLS ClientHello detail (nil if not TLS).
+	TLS *TLSDetail `json:"tls,omitempty"`
 }
 
 // IPDetail contains IPv4 header fields.
@@ -197,6 +200,15 @@ func Summarize(entry pktlog.DissectedEntry, number int) *PacketSummary {
 				detail.HTTP = h
 				s.Protocol = "HTTP"
 				s.Info = httpInfoLine(h)
+			}
+		}
+
+		// Attempt TLS ClientHello dissection on port 443.
+		if dp.TCP.SrcPort == 443 || dp.TCP.DstPort == 443 {
+			if t := dissectTLS(dp.TCP.Payload); t != nil {
+				detail.TLS = t
+				s.Protocol = "TLS"
+				s.Info = tlsInfoLine(t)
 			}
 		}
 
