@@ -19,14 +19,17 @@ import (
 	"github.com/bassosimone/iss"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
+	"github.com/pkg/browser"
 )
 
 func serveMain(ctx context.Context, args []string) error {
 	// Parse flags.
 	fset := vflag.NewFlagSet("2026-03-23-lab serve", vflag.ExitOnError)
 	addr := "127.0.0.1:0"
+	browse := false
 	datadir := "data"
 	fset.StringVar(&addr, 0, "addr", "The `ADDRESS` to listen on.")
+	fset.BoolVar(&browse, 'b', "browser", "Open the lab in the default browser.")
 	fset.StringVar(&datadir, 'd', "datadir", "The `DIR` containing web assets, DPI presets, and PKI certificates.")
 	fset.AutoHelp('h', "help", "Print this help message and exit.")
 	runtimex.PanicOnError0(fset.Parse(args)) // We are using vflag.ExitOnError
@@ -58,6 +61,11 @@ func serveMain(ctx context.Context, args []string) error {
 	fmt.Fprintf(os.Stderr, "listening on %s\n", baseURL)
 	urlFile := filepath.Join(datadir, "url.txt")
 	runtimex.LogFatalOnError0(os.WriteFile(urlFile, []byte(baseURL), 0644))
+
+	// Optionally open the lab in the default browser.
+	if browse {
+		browser.OpenURL(baseURL + "lab/")
+	}
 
 	// Serve HTTP until the context is canceled.
 	srv := &http.Server{Handler: mux}
