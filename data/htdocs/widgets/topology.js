@@ -22,6 +22,18 @@ class TopologyMap {
   #playBtn;
   #playing = false;
   #playTimer = null;
+  #audioCtx = null;
+
+  // Pentatonic note frequencies (Hz) assigned to each node.
+  // C4=262, D4=294, E4=330, G4=392.
+  static #NOTE_BY_IP = new Map([
+    ["130.192.91.211", 262],   // client → C4
+    ["130.192.3.21", 294],     // giove.polito.it → D4
+    ["8.8.8.8", 330],          // dns.google → E4
+    ["8.8.4.4", 330],          // dns.google → E4
+    ["104.18.26.120", 392],    // www.example.com → G4
+    ["104.18.27.120", 392],    // www.example.com → G4
+  ]);
 
   static #SVG_NS = "http://www.w3.org/2000/svg";
   static #NODE_W = 260;
@@ -204,7 +216,7 @@ class TopologyMap {
     bar.appendChild(this.#btn("\u25b6", "Next", () => this.#step(1)));
     bar.appendChild(this.#btn("\u25b6|", "Last", () => { this.#pause(); this.#goTo(this.#packets.length - 1); }));
     bar.appendChild(this.#sep());
-    this.#playBtn = this.#btn("\u23f5", "Play", () => this.#togglePlay());
+    this.#playBtn = this.#btn("\u23e9", "Fast forward", () => this.#togglePlay());
     bar.appendChild(this.#playBtn);
 
     this.#statusEl = document.createElement("span");
@@ -284,7 +296,7 @@ class TopologyMap {
     if (this.#packets.length === 0) return;
     this.#playing = true;
     this.#playBtn.textContent = "\u23f8";
-    this.#playBtn.title = "Pause";
+    this.#playBtn.title = "Pause fast forward";
 
     // If at the end or not started, restart from the beginning.
     if (this.#cursor < 0 || this.#cursor >= this.#packets.length - 1) {
@@ -295,8 +307,8 @@ class TopologyMap {
 
   #pause() {
     this.#playing = false;
-    this.#playBtn.textContent = "\u23f5";
-    this.#playBtn.title = "Play";
+    this.#playBtn.textContent = "\u23e9";
+    this.#playBtn.title = "Fast forward";
     if (this.#playTimer) {
       clearTimeout(this.#playTimer);
       this.#playTimer = null;
@@ -324,6 +336,46 @@ class TopologyMap {
       this.#goTo(this.#cursor + 1);
       this.#scheduleNext();
     }, delay);
+  }
+
+  // ── Sound ───────────────────────────────────────────────
+
+  #playTone(pkt) {
+    // Create AudioContext lazily (requires a prior user gesture).
+    if (!this.#audioCtx) {
+      this.#audioCtx = new AudioContext();
+    }
+
+    // Determine which node is active and its base frequency.
+    const ip = pkt.event === "entered" ? pkt.src : pkt.dst;
+    const baseFreq = TopologyMap.#NOTE_BY_IP.get(ip);
+    if (!baseFreq) return;
+
+    // "delivered" plays one octave higher than "entered".
+    const freq = pkt.event === "delivered" ? baseFreq * 2 : baseFreq;
+
+    // Waveform: sawtooth for RST (harsh), triangle for control packets
+    // (SYN/FIN/ACK-only), sine for everything else (smooth).
+    let waveform = "sine";
+    if (pkt.flags && pkt.flags.includes("RST")) {
+      waveform = "sawtooth";
+    } else if (pkt.protocol === "TCP" && pkt.length <= 44) {
+      // ~44 bytes = IP(20) + TCP(20-24) with no payload = control packet.
+      waveform = "triangle";
+    }
+
+    const ctx = this.#audioCtx;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = waveform;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.15);
   }
 
   // ── Manual stepping ────────────────────────────────────
@@ -364,6 +416,7 @@ class TopologyMap {
       this.#showArrow(edge, pkt.event === "entered", color);
     }
 
+    this.#playTone(pkt);
     this.#updateDisplay();
   }
 
