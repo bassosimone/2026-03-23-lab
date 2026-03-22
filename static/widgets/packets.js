@@ -12,6 +12,7 @@ class PacketViewer {
   #statusEl;
   #detailPane;
   #perspectiveButtons;
+  #pcapBtn;
   #currentAddr = "";
   #selectedRow = null;
 
@@ -66,6 +67,24 @@ class PacketViewer {
     clearBtn.addEventListener("click", () => this.#clear());
     controls.appendChild(clearBtn);
 
+    // Second separator.
+    const sep2 = document.createElement("div");
+    sep2.className = "packets-separator";
+    controls.appendChild(sep2);
+
+    // Download PCAP button (disabled when perspective is "All").
+    this.#pcapBtn = document.createElement("button");
+    this.#pcapBtn.textContent = "Download PCAP";
+    this.#pcapBtn.disabled = true;
+    this.#pcapBtn.addEventListener("click", () => this.#download("pcap"));
+    controls.appendChild(this.#pcapBtn);
+
+    // Download JSON button.
+    const jsonBtn = document.createElement("button");
+    jsonBtn.textContent = "Download JSON";
+    jsonBtn.addEventListener("click", () => this.#download("json"));
+    controls.appendChild(jsonBtn);
+
     // Status label.
     this.#statusEl = document.createElement("span");
     this.#statusEl.className = "packets-status";
@@ -112,7 +131,20 @@ class PacketViewer {
       b.classList.toggle("active", b === btn);
     }
 
+    // PCAP download requires a specific address.
+    this.#pcapBtn.disabled = (this.#currentAddr === "");
+
     this.#refresh();
+  }
+
+  // Opens a download URL for the current perspective in the
+  // given format ("pcap" or "json").
+  #download(format) {
+    let url = "/api/pktlog?format=" + format + "&download=1";
+    if (this.#currentAddr) {
+      url += "&addr=" + encodeURIComponent(this.#currentAddr);
+    }
+    window.open(url);
   }
 
   // Clears the packet log on the server, then refreshes.

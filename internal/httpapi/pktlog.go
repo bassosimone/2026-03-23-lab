@@ -77,6 +77,9 @@ func (h *Handler) servePktlogJSON(w http.ResponseWriter, r *http.Request) {
 		Packets:  packets,
 	}
 	w.Header().Set("Content-Type", "application/json")
+	if r.URL.Query().Get("download") == "1" {
+		w.Header().Set("Content-Disposition", "attachment; filename=\"packets.json\"")
+	}
 	json.NewEncoder(w).Encode(resp)
 }
 
