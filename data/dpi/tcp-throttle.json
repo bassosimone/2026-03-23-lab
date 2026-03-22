@@ -1,0 +1,26 @@
+{
+  "description": "TCP throttle: slow down conns matching SNI www.example.com",
+  "rules": [
+    {
+      "type": "tcp",
+      "rule": {
+        "action": "throttle",
+        "server_addr": "104.18.26.120",
+        "server_port": 80,
+        "contains": "www.example.com",
+        "delay_ms": 100,
+        "plr": 0.05
+      }
+    }, {
+      "type": "tcp",
+      "rule": {
+        "action": "throttle",
+        "server_addr": "104.18.26.120",
+        "server_port": 443,
+        "contains": "www.example.com",
+        "delay_ms": 100,
+        "plr": 0.05
+      }
+    }
+  ]
+}

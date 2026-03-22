@@ -177,8 +177,8 @@ class CensorshipPanel {
       case "throttle": {
         let text = "throttle";
         const parts = [];
-        if (rule.delay_ms) parts.push("+" + rule.delay_ms + "ms delay");
-        if (rule.plr) parts.push((rule.plr * 100) + "% packet loss");
+        if (rule.delay_ms) parts.push("+" + rule.delay_ms + "ms");
+        if (rule.plr) parts.push((rule.plr * 100) + "% PLR");
         if (parts.length > 0) text += ": " + parts.join(", ");
         action.textContent = text;
         break;

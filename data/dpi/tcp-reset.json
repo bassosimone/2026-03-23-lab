@@ -1,0 +1,23 @@
+{
+  "description": "TCP RST for www.example.com",
+  "rules": [
+    {
+      "type": "tcp",
+      "rule": {
+        "action": "reset",
+        "server_addr": "104.18.26.120",
+        "server_port": 80,
+        "contains": "Host: www.example.com"
+      }
+    },
+    {
+      "type": "tcp",
+      "rule": {
+        "action": "reset",
+        "server_addr": "104.18.26.120",
+        "server_port": 443,
+        "contains": "Host: www.example.com"
+      }
+    }
+  ]
+}
