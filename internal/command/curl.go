@@ -25,11 +25,13 @@ func (r *Runner) runCurl(ctx context.Context, params *Params) error {
 	fset.Stdout = params.Stdout
 	fset.Stderr = params.Stderr
 	var (
+		maxTime  float64
 		output   string
 		progress bool
 		resolve  string
 		verbose  bool
 	)
+	fset.Float64Var(&maxTime, 'm', "max-time", "Maximum time in `SECONDS` for the whole operation.")
 	fset.StringVar(&output, 'o', "output", "Write body to `FILE` (use /dev/null to discard).")
 	fset.BoolVar(&progress, '#', "progress-bar", "Show a progress bar.")
 	fset.BoolVar(&verbose, 'v', "verbose", "Print request and response headers.")
@@ -46,6 +48,14 @@ func (r *Runner) runCurl(ctx context.Context, params *Params) error {
 		return err
 	}
 	rawURL := fset.Args()[0]
+
+	// Apply --max-time timeout if provided.
+	if maxTime > 0 {
+		timeout := time.Duration(maxTime * float64(time.Second))
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
 
 	// Parse --resolve if provided.
 	var rhost, rport, raddr string
