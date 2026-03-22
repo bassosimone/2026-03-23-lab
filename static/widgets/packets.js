@@ -270,6 +270,25 @@ class PacketViewer {
       ));
     }
 
+    // HTTP section.
+    if (pkt.detail && pkt.detail.http) {
+      const http = pkt.detail.http;
+
+      const rows = [["First Line", http.first_line]];
+      for (const hdr of http.headers) {
+        const colon = hdr.indexOf(":");
+        if (colon !== -1) {
+          rows.push([hdr.slice(0, colon).trim(), hdr.slice(colon + 1).trim()]);
+        } else {
+          rows.push(["Header", hdr]);
+        }
+      }
+
+      this.#detailPane.appendChild(this.#makeSection(
+        "Hypertext Transfer Protocol", rows
+      ));
+    }
+
     // DNS section.
     if (pkt.detail && pkt.detail.dns) {
       const d = pkt.detail.dns;

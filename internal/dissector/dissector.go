@@ -73,6 +73,9 @@ type PacketDetail struct {
 
 	// DNS is the application layer DNS detail (nil if not DNS).
 	DNS *DNSDetail `json:"dns,omitempty"`
+
+	// HTTP is the application layer HTTP detail (nil if not HTTP).
+	HTTP *HTTPDetail `json:"http,omitempty"`
 }
 
 // IPDetail contains IPv4 header fields.
@@ -186,6 +189,15 @@ func Summarize(entry pktlog.DissectedEntry, number int) *PacketSummary {
 			Checksum:   dp.TCP.Checksum,
 			Urgent:     dp.TCP.Urgent,
 			PayloadLen: len(dp.TCP.Payload),
+		}
+
+		// Attempt HTTP dissection on port 80.
+		if dp.TCP.SrcPort == 80 || dp.TCP.DstPort == 80 {
+			if h := dissectHTTP(dp.TCP.Payload); h != nil {
+				detail.HTTP = h
+				s.Protocol = "HTTP"
+				s.Info = httpInfoLine(h)
+			}
 		}
 
 	case layers.IPProtocolUDP:
