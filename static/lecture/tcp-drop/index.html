@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TCP Dropping (GFW)</title>
+<link rel="stylesheet" href="/deps/xterm/5.5.0/xterm.css">
+<link rel="stylesheet" href="/widgets/console.css">
+<link rel="stylesheet" href="/widgets/packets.css">
+<link rel="stylesheet" href="/widgets/policytoggle.css">
+
+<style>
+  body {
+    margin: 0;
+    padding: 20px 40px;
+    background: #f0f0f0;
+    font-family: 'Ubuntu Mono', 'Courier New', monospace;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+  }
+
+  h2 {
+    margin: 24px 0 8px 0;
+    font-size: 22px;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 4px;
+  }
+
+  .section {
+    margin-bottom: 32px;
+    width: 95vw;
+    max-width: 1400px;
+  }
+
+  .section p {
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 8px 0 16px 0;
+  }
+
+  .section code {
+    background: #e0e0e0;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 14px;
+  }
+
+  /* Policy toggle sizing. */
+  .section .policytoggle-widget {
+    max-width: 800px;
+    margin-bottom: 16px;
+  }
+
+  /* Console sizing. */
+  .section .console-widget {
+    width: 100%;
+    height: 200px;
+    margin-bottom: 16px;
+  }
+
+  /* Packets sizing. */
+  .section .packets-widget {
+    width: 100%;
+    height: 500px;
+  }
+</style>
+
+</head>
+<body>
+
+<h1>TCP Dropping (GFW)</h1>
+
+<!-- Introduction -->
+<div class="section">
+  <p>
+    Once DNS resolution succeeds, the client must open a TCP connection to the
+    server's IP address. This requires a three-way handshake: the client sends
+    a SYN, the server replies with SYN-ACK, and the client confirms with ACK.
+    Only then can application data (HTTP, TLS, etc.) flow.
+  </p>
+
+  <img src="/img/scenario.png" alt="TCP dropping scenario diagram"
+       style="width: 50vw; display: block; margin: 0 auto;">
+
+  <p>
+    A middlebox such as the <strong>Great Firewall of China (GFW)</strong> can
+    silently <strong>drop all TCP packets</strong> destined for a blocked IP address.
+    Unlike DNS spoofing, which targets a domain name, IP-based dropping is a blunter
+    instrument: it blocks <em>everything</em> hosted on that IP, regardless of which
+    domain or protocol the client is trying to reach. The GFW is documented to use
+    this technique against known circumvention endpoints such as Tor bridges and VPN
+    servers (Winter &amp; Lindskog, 2012; Ensafi et al., 2015).
+  </p>
+
+  <p>
+    Because the packets are silently discarded &mdash; no error, no reset &mdash;
+    the client has no way to distinguish a blocked connection from a network failure.
+    It keeps retransmitting SYN packets until it eventually gives up with a timeout.
+    This makes IP-based dropping harder to diagnose than techniques that produce an
+    immediate error signal.
+  </p>
+</div>
+
+<!-- Section 1: Normal HTTP Connection -->
+<div class="section">
+  <h2>1. Normal HTTP Connection</h2>
+  <p>
+    Before enabling any censorship, let's verify that the connection works normally.
+    Type <code>curl http://www.example.com/</code> in the terminal below. You should
+    see the server's response. Use the packet viewer to observe the full TCP handshake
+    (SYN, SYN-ACK, ACK) followed by the HTTP request and response.
+  </p>
+  <div id="console-1"></div>
+  <div id="packets-1"></div>
+</div>
+
+<!-- Section 2a: Enable TCP Dropping -->
+<div class="section">
+  <h2>2a. Enabling TCP Dropping</h2>
+  <p>
+    Now let's enable IP-based TCP dropping using the toggle below. Once active,
+    run <code>curl http://www.example.com/</code> again. The connection will hang:
+    the packet viewer shows the client sending SYN packets that are silently
+    dropped &mdash; no SYN-ACK ever comes back. Eventually, curl gives up with
+    a timeout error.
+  </p>
+  <div id="widget-policy"></div>
+  <div id="console-2a"></div>
+  <div id="packets-2a"></div>
+</div>
+
+<!-- Section 2b: HTTPS Also Blocked -->
+<div class="section">
+  <h2>2b. HTTPS Also Blocked</h2>
+  <p>
+    With censorship still active, try <code>curl https://www.example.com/</code>.
+    The result is the same: a timeout. Because the block operates at the TCP layer
+    &mdash; before any application data is exchanged &mdash; it does not matter
+    whether the client speaks HTTP or HTTPS. The SYN packet is dropped regardless
+    of the destination port. This is a key difference from DNS spoofing, which
+    only affects the name resolution step.
+  </p>
+  <div id="console-2b"></div>
+  <div id="packets-2b"></div>
+</div>
+
+<!-- Section 3: Bypassing via Alternative IP -->
+<div class="section">
+  <h2>3. Bypassing via Alternative IP</h2>
+  <p>
+    Many websites are hosted behind CDNs and resolve to multiple IP addresses.
+    The censor blocks <code>104.18.26.120</code>, but the server is also reachable
+    at <code>104.18.27.120</code>. Run
+    <code>curl --resolve www.example.com:80:104.18.27.120 http://www.example.com/</code>
+    to connect through the unblocked IP. The connection succeeds because the censor
+    has not blocked <em>every</em> address for this server &mdash; a common limitation
+    of IP-based blocking when targeting CDN-hosted content.
+  </p>
+  <div id="console-3"></div>
+  <div id="packets-3"></div>
+</div>
+
+<script src="/deps/xterm/5.5.0/xterm.js"></script>
+<script src="/widgets/console.js"></script>
+<script src="/widgets/packets.js"></script>
+<script src="/widgets/policytoggle.js"></script>
+
+<script>
+"use strict";
+
+// Section 1: normal HTTP connection.
+new Console(document.getElementById("console-1"));
+new PacketViewer(document.getElementById("packets-1"));
+
+// Section 2a: enable TCP dropping.
+new PolicyToggle(document.getElementById("widget-policy"), {
+  preset: "tcp-drop",
+  title: "TCP Dropping (GFW)",
+});
+new Console(document.getElementById("console-2a"));
+new PacketViewer(document.getElementById("packets-2a"));
+
+// Section 2b: HTTPS also blocked.
+new Console(document.getElementById("console-2b"));
+new PacketViewer(document.getElementById("packets-2b"));
+
+// Section 3: bypass via alternative IP.
+new Console(document.getElementById("console-3"));
+new PacketViewer(document.getElementById("packets-3"));
+</script>
+
+</body>
+</html>
