@@ -18,6 +18,7 @@ class TopologyMap {
   #infoEl;
   #cloudPath;
   #cloudLabel;
+  #arrow;
 
   static #SVG_NS = "http://www.w3.org/2000/svg";
   static #NODE_W = 260;
@@ -123,18 +124,19 @@ class TopologyMap {
     });
 
     // Edges (behind everything). Store references for highlighting.
+    // Each edge records coordinates and whether (x2,y2) is the cloud end.
     const clientEdge = this.#edge(svg,
       client.x + nw, clientY + clientH / 2,
-      cloudCx - cloudEdge, cloudCy);
+      cloudCx - cloudEdge, cloudCy, true);
     for (const ip of client.ips) {
       this.#edgeByIP.set(ip, clientEdge);
     }
 
     for (let i = 0; i < servers.length; i++) {
       const sCy = serverYs[i] + heights[i] / 2;
-      const line = this.#edge(svg, cloudCx + cloudEdge, cloudCy, serverX, sCy);
+      const edge = this.#edge(svg, cloudCx + cloudEdge, cloudCy, serverX, sCy, false);
       for (const ip of servers[i].ips) {
-        this.#edgeByIP.set(ip, line);
+        this.#edgeByIP.set(ip, edge);
       }
     }
 
@@ -170,6 +172,14 @@ class TopologyMap {
     for (let i = 0; i < servers.length; i++) {
       this.#node(svg, { ...servers[i], x: serverX, y: serverYs[i] });
     }
+
+    // Directional arrow (on top of everything, initially hidden).
+    this.#arrow = this.#svgEl("polygon", {
+      points: "0,-7 14,0 0,7",
+      fill: "#4caf50",
+      visibility: "hidden",
+    });
+    svg.appendChild(this.#arrow);
 
     this.#container.appendChild(svg);
 
@@ -275,24 +285,49 @@ class TopologyMap {
     // "entered" = packet leaving the source node.
     // "delivered" = packet arriving at the destination node.
     const ip = pkt.event === "entered" ? pkt.src : pkt.dst;
-    const line = this.#edgeByIP.get(ip);
-    if (line) {
+    const edge = this.#edgeByIP.get(ip);
+    if (edge) {
       let color = pkt.event === "entered" ? "#4caf50" : "#2196f3";
       if (pkt.flags && pkt.flags.includes("RST")) {
         color = "#e53935";
       }
-      line.setAttribute("stroke", color);
-      line.setAttribute("stroke-width", "4");
+      edge.line.setAttribute("stroke", color);
+      edge.line.setAttribute("stroke-width", "4");
+      this.#showArrow(edge, pkt.event === "entered", color);
     }
 
     this.#updateDisplay();
   }
 
   #resetEdges() {
-    for (const line of this.#allEdges) {
-      line.setAttribute("stroke", "#bbb");
-      line.setAttribute("stroke-width", "2");
+    for (const edge of this.#allEdges) {
+      edge.line.setAttribute("stroke", "#bbb");
+      edge.line.setAttribute("stroke-width", "2");
     }
+    this.#arrow.setAttribute("visibility", "hidden");
+  }
+
+  // Position and show the directional arrow at the midpoint of an edge.
+  #showArrow(edge, towardCloud, color) {
+    const mx = (edge.x1 + edge.x2) / 2;
+    const my = (edge.y1 + edge.y2) / 2;
+
+    // Compute direction of packet travel.
+    // "entered" = toward cloud, "delivered" = away from cloud.
+    // cloudIsEnd tells us which end of the line is the cloud.
+    let dx, dy;
+    if (towardCloud === edge.cloudIsEnd) {
+      dx = edge.x2 - edge.x1;
+      dy = edge.y2 - edge.y1;
+    } else {
+      dx = edge.x1 - edge.x2;
+      dy = edge.y1 - edge.y2;
+    }
+
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    this.#arrow.setAttribute("transform", `translate(${mx},${my}) rotate(${angle})`);
+    this.#arrow.setAttribute("fill", color);
+    this.#arrow.setAttribute("visibility", "visible");
   }
 
   #updateDisplay() {
@@ -374,14 +409,15 @@ class TopologyMap {
     svg.appendChild(g);
   }
 
-  #edge(svg, x1, y1, x2, y2) {
+  #edge(svg, x1, y1, x2, y2, cloudIsEnd) {
     const line = this.#svgEl("line", {
       x1, y1, x2, y2,
       stroke: "#bbb", "stroke-width": 2,
     });
     svg.appendChild(line);
-    this.#allEdges.push(line);
-    return line;
+    const edge = { line, x1, y1, x2, y2, cloudIsEnd };
+    this.#allEdges.push(edge);
+    return edge;
   }
 
   #svgEl(tag, attrs) {
