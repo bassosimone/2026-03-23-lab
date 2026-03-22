@@ -5,10 +5,12 @@
 <meta charset="utf-8">
 <title>Censorship Lab</title>
 <link rel="stylesheet" href="/deps/xterm/5.5.0/xterm.css">
+<link rel="stylesheet" href="/widgets/about.css">
 <link rel="stylesheet" href="/widgets/topology.css">
 <link rel="stylesheet" href="/widgets/console.css">
 <link rel="stylesheet" href="/widgets/censorship.css">
 <link rel="stylesheet" href="/widgets/packets.css">
+<link rel="stylesheet" href="/widgets/focustree.css">
 
 <style>
   body {
@@ -66,6 +68,11 @@
     align-items: flex-start;
   }
 
+  #tab-about .about-widget {
+    width: 90vw;
+    max-width: 800px;
+    max-height: calc(100vh - 100px);
+  }
   #tab-network .topology-widget {
     width: 95vw;
     height: calc(100vh - 100px);
@@ -82,19 +89,32 @@
     width: 90vw;
     max-width: 800px;
   }
+  #tab-focus {
+    background: #0f1923;
+  }
+  #tab-focus .focus-widget {
+    width: 95vw;
+    height: calc(100vh - 100px);
+  }
 </style>
 
 </head>
 <body>
 
 <div id="tabs">
-  <button class="active" data-tab="network">Network</button>
+  <button class="active" data-tab="about">About</button>
+  <button data-tab="network">Network</button>
   <button data-tab="console">Console</button>
   <button data-tab="packets">Packets</button>
   <button data-tab="censorship">Censorship</button>
+  <button data-tab="focus">Focus</button>
 </div>
 
-<div id="tab-network" class="tab-content visible">
+<div id="tab-about" class="tab-content visible">
+  <div id="widget-about"></div>
+</div>
+
+<div id="tab-network" class="tab-content">
   <div id="widget-topology"></div>
 </div>
 
@@ -110,20 +130,28 @@
   <div id="widget-censorship"></div>
 </div>
 
+<div id="tab-focus" class="tab-content">
+  <div id="widget-focus"></div>
+</div>
+
 <script src="/deps/xterm/5.5.0/xterm.js"></script>
+<script src="/widgets/about.js"></script>
 <script src="/widgets/topology.js"></script>
 <script src="/widgets/console.js"></script>
 <script src="/widgets/packets.js"></script>
 <script src="/widgets/censorship.js"></script>
+<script src="/widgets/focustree.js"></script>
 
 <script>
 "use strict";
 
 // Create all widgets once.
+new AboutPanel(document.getElementById("widget-about"));
 new TopologyMap(document.getElementById("widget-topology"));
 const consoleWidget = new Console(document.getElementById("widget-console"));
 new PacketViewer(document.getElementById("widget-packets"));
 new CensorshipPanel(document.getElementById("widget-censorship"));
+new FocusTree(document.getElementById("widget-focus"));
 
 // Tab switching.
 const tabButtons = document.querySelectorAll("#tabs button");

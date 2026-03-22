@@ -1,0 +1,229 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
+/* Focus tree widget — Paradox grand strategy style */
+
+.focus-widget {
+  background: #0f1923;
+  border-radius: 6px;
+  font-family: 'Ubuntu Mono', 'Courier New', monospace;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  padding: 30px 20px;
+}
+
+/* ── Node states ──────────────────────────────────────── */
+
+.focus-node {
+  width: 220px;
+  padding: 12px 16px;
+  border: 2px solid #2a4a6b;
+  border-radius: 6px;
+  text-align: center;
+  user-select: none;
+  flex-shrink: 0;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+/* Unavailable: dimmed, not interactive */
+.focus-node.focus-unavailable {
+  background: #111a24;
+  border-color: #1e2e3e;
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Available: normal, clickable */
+.focus-node.focus-available {
+  background: #1b2838;
+  border-color: #2a4a6b;
+  cursor: pointer;
+}
+
+.focus-node.focus-available:hover {
+  border-color: #4a7a9b;
+  background: #233548;
+}
+
+/* Selected: glowing blue, active focus */
+.focus-node.focus-selected {
+  background: #1a3050;
+  border-color: #4a9eff;
+  box-shadow: 0 0 14px rgba(74, 158, 255, 0.5);
+  cursor: pointer;
+}
+
+/* Done: green */
+.focus-node.focus-done {
+  background: #142e1e;
+  border-color: #27ae60;
+  cursor: pointer;
+}
+
+/* ── Node text ────────────────────────────────────────── */
+
+.focus-node-label {
+  font-size: 18px;
+  font-weight: bold;
+  color: #c7d5e0;
+}
+
+.focus-node.focus-unavailable .focus-node-label {
+  color: #4a5a6a;
+}
+
+.focus-node.focus-selected .focus-node-label {
+  color: #8ac4ff;
+}
+
+.focus-node.focus-done .focus-node-label {
+  color: #5dde8e;
+}
+
+.focus-node-desc {
+  font-size: 12px;
+  color: #7a8a9a;
+  margin-top: 4px;
+}
+
+.focus-node.focus-unavailable .focus-node-desc {
+  color: #3a4a5a;
+}
+
+.focus-node.focus-selected .focus-node-desc {
+  color: #6a9ac0;
+}
+
+.focus-node.focus-done .focus-node-desc {
+  color: #4a9a6a;
+}
+
+/* ── Connecting lines ─────────────────────────────────── */
+
+.focus-line {
+  width: 2px;
+  height: 18px;
+  background: #2a4a6b;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.focus-line.complete {
+  background: #27ae60;
+}
+
+/* ── Branch layout ────────────────────────────────────── */
+
+.focus-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Horizontal bar — margins set by JS */
+
+.focus-hbar {
+  height: 2px;
+  background: #2a4a6b;
+  transition: background 0.2s;
+}
+
+.focus-hbar.complete {
+  background: #27ae60;
+}
+
+.focus-branch-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.focus-branch-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+/* Vertical drop line */
+
+.focus-drop {
+  width: 2px;
+  height: 18px;
+  background: #2a4a6b;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.focus-drop.complete {
+  background: #27ae60;
+}
+
+/* Group wrapping branch + merge so the merge stretches to branch width */
+
+.focus-branch-merge-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* ── Merge: columns converge back into a single line ── */
+
+.focus-merge {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.focus-merge-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Vertical rise line from each column up to the merge bar */
+.focus-rise {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.focus-rise::after {
+  content: "";
+  width: 2px;
+  height: 18px;
+  background: #2a4a6b;
+  transition: background 0.2s;
+}
+
+.focus-merge.complete .focus-rise::after {
+  background: #27ae60;
+}
+
+/* Horizontal merge bar — margins set by JS */
+.focus-mbar {
+  height: 2px;
+  background: #2a4a6b;
+  transition: background 0.2s;
+}
+
+.focus-merge.complete .focus-mbar {
+  background: #27ae60;
+}
+
+/* Nodes inside branches are smaller */
+
+.focus-branch-col > .focus-node {
+  width: 100px;
+  padding: 10px 6px;
+}
+
+.focus-branch-col > .focus-node .focus-node-label {
+  font-size: 14px;
+}
+
+.focus-branch-col > .focus-node .focus-node-desc {
+  font-size: 10px;
+}

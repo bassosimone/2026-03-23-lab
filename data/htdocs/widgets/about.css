@@ -1,0 +1,101 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
+.about-widget {
+  background: #fff;
+  border-radius: 6px;
+  padding: 30px 40px;
+  font-family: 'Ubuntu Mono', 'Courier New', monospace;
+  box-sizing: border-box;
+  overflow-y: auto;
+  max-width: 820px;
+}
+
+.about-title {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0 0 6px 0;
+}
+
+.about-subtitle {
+  font-size: 16px;
+  color: #555;
+  margin: 0 0 28px 0;
+}
+
+.about-section {
+  margin-bottom: 24px;
+}
+
+.about-section h2 {
+  font-size: 18px;
+  margin: 0 0 10px 0;
+}
+
+.about-section p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+/* Architecture diagram: nested boxes */
+
+.about-diagram {
+  margin: 20px 0;
+  font-size: 13px;
+}
+
+.about-box {
+  border: 2px solid #aaa;
+  border-radius: 8px;
+  padding: 12px 14px;
+  position: relative;
+}
+
+.about-box-label {
+  position: absolute;
+  top: -10px;
+  left: 14px;
+  background: #fff;
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #555;
+}
+
+.about-box-inner {
+  margin-top: 6px;
+}
+
+/* Nesting colors */
+.about-box.level-0 { border-color: #2196f3; }
+.about-box.level-0 > .about-box-label { color: #2196f3; }
+
+.about-box.level-1 { border-color: #4caf50; margin-top: 10px; }
+.about-box.level-1 > .about-box-label { color: #4caf50; }
+
+.about-box.level-2 { border-color: #ff9800; margin-top: 10px; }
+.about-box.level-2 > .about-box-label { color: #ff9800; }
+
+/* Flow arrows inside the diagram */
+.about-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.about-flow-item {
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.about-flow-arrow {
+  color: #999;
+  font-size: 16px;
+}
