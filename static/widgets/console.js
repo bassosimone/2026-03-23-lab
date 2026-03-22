@@ -31,7 +31,7 @@ class Console {
     this.#term = new Terminal({
       cursorBlink: true,
       fontFamily: options.fontFamily || "'Ubuntu Mono', 'Courier New', monospace",
-      fontSize: options.fontSize || 28,
+      fontSize: options.fontSize || 24,
       theme: options.theme || {
         background: "#ffffff",
         foreground: "#000000",
@@ -225,6 +225,7 @@ class Console {
             this.#term.clear();
             this.#term.write(this.#prompt);
             this.#line = "";
+            this.#cursor = 0;
             this.#historyIndex = -1;
           } else {
             this.#runCommand(trimmed);
@@ -238,6 +239,10 @@ class Console {
         this.#term.clear();
         // \x1b[H = CSI cursor home (move to row 1, col 1)
         this.#term.write("\x1b[H" + this.#prompt + this.#line);
+        // Move visual cursor back to match #cursor position.
+        if (this.#cursor < this.#line.length) {
+          this.#term.write("\x1b[" + (this.#line.length - this.#cursor) + "D");
+        }
 
       } else if (ch === "\x7f" || ch === "\b") { // Backspace (DEL or BS)
         if (this.#cursor > 0) {
