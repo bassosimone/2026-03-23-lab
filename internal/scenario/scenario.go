@@ -29,14 +29,20 @@ func Default() *iss.Scenario {
 				Domains: []string{"giove.polito.it"},
 			},
 			{
-				Addrs:   []netip.Addr{netip.MustParseAddr("8.8.4.4"), netip.MustParseAddr("8.8.8.8")},
+				Addrs: []netip.Addr{
+					netip.MustParseAddr("8.8.4.4"),
+					netip.MustParseAddr("8.8.8.8"),
+				},
 				Domains: []string{"dns.google"},
 				Aliases: []string{"dns.google.com"},
 			},
 		},
 		HTTPServers: []iss.HTTPServer{
 			{
-				Addrs:   []netip.Addr{netip.MustParseAddr("104.18.26.120")},
+				Addrs: []netip.Addr{
+					netip.MustParseAddr("104.18.26.120"),
+					netip.MustParseAddr("104.18.27.120"),
+				},
 				Domains: []string{"www.example.com", "example.com"},
 				Aliases: []string{"www.example.org", "example.org"},
 				Handler: exampleComHandler(),
