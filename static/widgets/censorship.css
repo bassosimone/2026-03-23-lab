@@ -39,9 +39,16 @@
   background: #f0f0f0;
 }
 
-.censorship-preset.active {
-  border-color: #2a7ae2;
-  background: #e8f0fe;
+/* Active "clear" preset: green border. */
+.censorship-preset.active-clear {
+  border-color: #27ae60;
+  background: #eafaf1;
+}
+
+/* Active censorship preset: red border. */
+.censorship-preset.active-censored {
+  border-color: #c0392b;
+  background: #fdf2f2;
 }
 
 .censorship-preset-name {
@@ -52,6 +59,46 @@
   color: #555;
   font-size: 14px;
   margin-top: 4px;
+}
+
+/* Rule details inside each card. */
+.censorship-preset-rules {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.censorship-preset.active-censored .censorship-preset-rules {
+  background: #fce8e8;
+}
+
+.censorship-preset.active-clear .censorship-preset-rules {
+  background: #d5f5e3;
+}
+
+.censorship-preset-rule {
+  margin-bottom: 4px;
+}
+
+.censorship-preset-rule:last-child {
+  margin-bottom: 0;
+}
+
+.censorship-preset-rule-arrow {
+  color: #c0392b;
+  font-weight: bold;
+}
+
+.censorship-preset-rule-match {
+  color: #333;
+}
+
+.censorship-preset-rule-action {
+  color: #c0392b;
+  font-weight: bold;
 }
 
 .censorship-status {

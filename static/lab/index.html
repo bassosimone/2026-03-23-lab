@@ -58,6 +58,13 @@
     justify-content: center;
   }
 
+  /* The censorship tab needs to scroll because the preset
+     cards with rule details can exceed the viewport height. */
+  #tab-censorship.visible {
+    overflow-y: auto;
+    align-items: flex-start;
+  }
+
   #tab-console .console-widget {
     width: 90vw;
     height: calc(100vh - 100px);
