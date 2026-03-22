@@ -70,6 +70,9 @@ type PacketDetail struct {
 
 	// UDP is the transport layer header detail (nil for TCP).
 	UDP *UDPDetail `json:"udp,omitempty"`
+
+	// DNS is the application layer DNS detail (nil if not DNS).
+	DNS *DNSDetail `json:"dns,omitempty"`
 }
 
 // IPDetail contains IPv4 header fields.
@@ -194,6 +197,15 @@ func Summarize(entry pktlog.DissectedEntry, number int) *PacketSummary {
 			Length:     dp.UDP.Length,
 			Checksum:   dp.UDP.Checksum,
 			PayloadLen: len(dp.UDP.Payload),
+		}
+
+		// Attempt DNS dissection when either port is 53.
+		if dp.UDP.SrcPort == 53 || dp.UDP.DstPort == 53 {
+			if d := dissectDNS(dp.UDP.Payload); d != nil {
+				detail.DNS = d
+				s.Protocol = "DNS"
+				s.Info = dnsInfoLine(d)
+			}
 		}
 	}
 

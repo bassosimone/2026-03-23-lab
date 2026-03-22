@@ -269,6 +269,34 @@ class PacketViewer {
         ]
       ));
     }
+
+    // DNS section.
+    if (pkt.detail && pkt.detail.dns) {
+      const d = pkt.detail.dns;
+      const kind = d.qr ? "response" : "query";
+
+      const rows = [
+        ["Transaction ID", "0x" + d.transaction_id.toString(16).padStart(4, "0")],
+        ["Type", kind],
+        ["Opcode", d.opcode],
+      ];
+
+      if (d.qr) {
+        rows.push(["Response Code", d.rcode]);
+      }
+
+      for (const q of d.questions) {
+        rows.push(["Query", q.name + " " + q.type]);
+      }
+
+      for (const a of (d.answers || [])) {
+        rows.push(["Answer", a]);
+      }
+
+      this.#detailPane.appendChild(this.#makeSection(
+        "Domain Name System (" + kind + ")", rows
+      ));
+    }
   }
 
   // Builds a collapsible detail section with a title header
