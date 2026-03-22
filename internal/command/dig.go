@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/bassosimone/dnscodec"
 	"github.com/bassosimone/dnsoverhttps"
@@ -43,6 +44,11 @@ func (r *Runner) runDig(ctx context.Context, params *Params) error {
 		vflag.NewValueBool(&shortFlag), "short", "Write terse output.",
 	))
 
+	timeoutSec := 5
+	fset.AddLongFlagDig(vflag.NewLongFlagInt(
+		vflag.NewValueInt(&timeoutSec), "time", "Set query timeout to `SECONDS`.",
+	))
+
 	fset.AutoHelp('h', "help", "Print this help message and exit.")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = 4
@@ -54,6 +60,13 @@ func (r *Runner) runDig(ctx context.Context, params *Params) error {
 		}
 		fset.PrintUsageError(params.Stderr, err)
 		return err
+	}
+
+	// Apply +time timeout.
+	if timeoutSec > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(timeoutSec)*time.Second)
+		defer cancel()
 	}
 
 	// Parse positional args: [@server] [type] [class] domain

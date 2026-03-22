@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/bassosimone/vflag"
 )
@@ -17,6 +18,8 @@ func (r *Runner) runHost(ctx context.Context, params *Params) error {
 	fset := vflag.NewFlagSet("host", vflag.ContinueOnError)
 	fset.Stdout = params.Stdout
 	fset.Stderr = params.Stderr
+	var waitSec int
+	fset.IntVar(&waitSec, 'W', "wait", "Set timeout to `SECONDS`.")
 	fset.AutoHelp('h', "help", "Print this help message and exit.")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = 1
@@ -29,6 +32,14 @@ func (r *Runner) runHost(ctx context.Context, params *Params) error {
 		return err
 	}
 	domain := fset.Args()[0]
+
+	// Apply timeout (default 5 seconds, like real host).
+	if waitSec <= 0 {
+		waitSec = 5
+	}
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithTimeout(ctx, time.Duration(waitSec)*time.Second)
+	defer cancel()
 
 	addrs, err := r.sim.LookupHost(ctx, domain)
 	if err != nil {
