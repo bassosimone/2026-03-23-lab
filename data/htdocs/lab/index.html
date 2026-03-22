@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <title>Censorship Lab</title>
 <link rel="stylesheet" href="/deps/xterm/5.5.0/xterm.css">
+<link rel="stylesheet" href="/widgets/topology.css">
 <link rel="stylesheet" href="/widgets/console.css">
 <link rel="stylesheet" href="/widgets/censorship.css">
 <link rel="stylesheet" href="/widgets/packets.css">
@@ -65,6 +66,10 @@
     align-items: flex-start;
   }
 
+  #tab-network .topology-widget {
+    width: 95vw;
+    height: calc(100vh - 100px);
+  }
   #tab-console .console-widget {
     width: 90vw;
     height: calc(100vh - 100px);
@@ -83,12 +88,17 @@
 <body>
 
 <div id="tabs">
-  <button class="active" data-tab="console">Console</button>
+  <button class="active" data-tab="network">Network</button>
+  <button data-tab="console">Console</button>
   <button data-tab="packets">Packets</button>
   <button data-tab="censorship">Censorship</button>
 </div>
 
-<div id="tab-console" class="tab-content visible">
+<div id="tab-network" class="tab-content visible">
+  <div id="widget-topology"></div>
+</div>
+
+<div id="tab-console" class="tab-content">
   <div id="widget-console"></div>
 </div>
 
@@ -101,6 +111,7 @@
 </div>
 
 <script src="/deps/xterm/5.5.0/xterm.js"></script>
+<script src="/widgets/topology.js"></script>
 <script src="/widgets/console.js"></script>
 <script src="/widgets/packets.js"></script>
 <script src="/widgets/censorship.js"></script>
@@ -109,6 +120,7 @@
 "use strict";
 
 // Create all widgets once.
+new TopologyMap(document.getElementById("widget-topology"));
 const consoleWidget = new Console(document.getElementById("widget-console"));
 new PacketViewer(document.getElementById("widget-packets"));
 new CensorshipPanel(document.getElementById("widget-censorship"));
