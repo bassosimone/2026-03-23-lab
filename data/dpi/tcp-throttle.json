@@ -8,8 +8,8 @@
         "server_addr": "104.18.26.120",
         "server_port": 80,
         "contains": "www.example.com",
-        "delay_ms": 100,
-        "plr": 0.05
+        "delay_ms": 50,
+        "plr": 0.01
       }
     }, {
       "type": "tcp",
@@ -18,8 +18,8 @@
         "server_addr": "104.18.26.120",
         "server_port": 443,
         "contains": "www.example.com",
-        "delay_ms": 100,
-        "plr": 0.05
+        "delay_ms": 50,
+        "plr": 0.01
       }
     }
   ]
