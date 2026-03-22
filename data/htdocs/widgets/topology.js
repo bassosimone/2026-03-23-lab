@@ -205,11 +205,13 @@ class TopologyMap {
     this.#statusEl.className = "topology-status";
     bar.appendChild(this.#statusEl);
 
-    this.#infoEl = document.createElement("span");
-    this.#infoEl.className = "topology-info";
-    bar.appendChild(this.#infoEl);
-
     this.#container.appendChild(bar);
+
+    // Packet detail line below the controls.
+    this.#infoEl = document.createElement("div");
+    this.#infoEl.className = "topology-info";
+    this.#container.appendChild(this.#infoEl);
+
     this.#updateDisplay();
   }
 
@@ -356,8 +358,12 @@ class TopologyMap {
       delta = ` (\u0394${this.#formatDelta(dt)})`;
     }
 
-    this.#infoEl.textContent =
-      `${timeMs}${delta}  #${pkt.number} ${pkt.event}  ${pkt.protocol}  ${pkt.src} \u2192 ${pkt.dst}  ${pkt.info}`;
+    const line1 = `${timeMs}${delta}  #${pkt.number} ${pkt.event}  ${pkt.protocol}  ${pkt.src} \u2192 ${pkt.dst}`;
+    const line2 = pkt.info;
+    this.#infoEl.textContent = "";
+    this.#infoEl.appendChild(document.createTextNode(line1));
+    this.#infoEl.appendChild(document.createElement("br"));
+    this.#infoEl.appendChild(document.createTextNode(line2));
   }
 
   // Parse "HH:MM:SS.uuuuuu" into total microseconds since midnight.
