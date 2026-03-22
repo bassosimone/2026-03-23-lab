@@ -27,7 +27,7 @@ func serveMain(ctx context.Context, args []string) error {
 	addr := "127.0.0.1:0"
 	datadir := "data"
 	fset.StringVar(&addr, 0, "addr", "The `ADDRESS` to listen on.")
-	fset.StringVar(&datadir, 'd', "datadir", "The `DIR` for cached PKI certificates.")
+	fset.StringVar(&datadir, 'd', "datadir", "The `DIR` containing web assets, DPI presets, and PKI certificates.")
 	fset.AutoHelp('h', "help", "Print this help message and exit.")
 	runtimex.PanicOnError0(fset.Parse(args)) // We are using vflag.ExitOnError
 
@@ -49,7 +49,7 @@ func serveMain(ctx context.Context, args []string) error {
 	mux := http.NewServeMux()
 	handler := httpapi.NewHandler(runner, dpi, logger, filepath.Join(datadir, "dpi"))
 	handler.Register(mux)
-	mux.Handle("/", http.FileServer(http.Dir("static")))
+	mux.Handle("/", http.FileServer(http.Dir(filepath.Join(datadir, "htdocs"))))
 
 	// Start listening and save the base URL for clients to discover.
 	listener := runtimex.LogFatalOnError1(net.Listen("tcp", addr))
