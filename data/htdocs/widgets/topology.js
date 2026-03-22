@@ -19,6 +19,9 @@ class TopologyMap {
   #cloudPath;
   #cloudLabel;
   #arrow;
+  #playBtn;
+  #playing = false;
+  #playTimer = null;
 
   static #SVG_NS = "http://www.w3.org/2000/svg";
   static #NODE_W = 260;
@@ -196,10 +199,13 @@ class TopologyMap {
 
     bar.appendChild(this.#btn("\u21bb", "Refresh packets", () => this.#loadPackets()));
     bar.appendChild(this.#sep());
-    bar.appendChild(this.#btn("|\u25c0", "First", () => this.#goTo(0)));
+    bar.appendChild(this.#btn("|\u25c0", "First", () => { this.#pause(); this.#goTo(0); }));
     bar.appendChild(this.#btn("\u25c0", "Previous", () => this.#step(-1)));
     bar.appendChild(this.#btn("\u25b6", "Next", () => this.#step(1)));
-    bar.appendChild(this.#btn("\u25b6|", "Last", () => this.#goTo(this.#packets.length - 1)));
+    bar.appendChild(this.#btn("\u25b6|", "Last", () => { this.#pause(); this.#goTo(this.#packets.length - 1); }));
+    bar.appendChild(this.#sep());
+    this.#playBtn = this.#btn("\u23f5", "Play", () => this.#togglePlay());
+    bar.appendChild(this.#playBtn);
 
     this.#statusEl = document.createElement("span");
     this.#statusEl.className = "topology-status";
@@ -218,6 +224,7 @@ class TopologyMap {
   // ── Packet loading & stepping ──────────────────────────
 
   async #loadPackets() {
+    this.#pause();
     // Fetch packets and active DPI policy in parallel.
     const [pktResp, dpiResp] = await Promise.all([
       fetch("/api/pktlog?format=json").catch(() => null),
@@ -263,7 +270,66 @@ class TopologyMap {
     }
   }
 
+  // ── Playback ────────────────────────────────────────────
+
+  #togglePlay() {
+    if (this.#playing) {
+      this.#pause();
+    } else {
+      this.#play();
+    }
+  }
+
+  #play() {
+    if (this.#packets.length === 0) return;
+    this.#playing = true;
+    this.#playBtn.textContent = "\u23f8";
+    this.#playBtn.title = "Pause";
+
+    // If at the end or not started, restart from the beginning.
+    if (this.#cursor < 0 || this.#cursor >= this.#packets.length - 1) {
+      this.#goTo(0);
+    }
+    this.#scheduleNext();
+  }
+
+  #pause() {
+    this.#playing = false;
+    this.#playBtn.textContent = "\u23f5";
+    this.#playBtn.title = "Play";
+    if (this.#playTimer) {
+      clearTimeout(this.#playTimer);
+      this.#playTimer = null;
+    }
+  }
+
+  #scheduleNext() {
+    if (!this.#playing) return;
+    if (this.#cursor >= this.#packets.length - 1) {
+      this.#pause();
+      return;
+    }
+
+    // Compute delay from actual inter-packet timing.
+    // Scale 50x so the ~10ms simulation delay becomes ~500ms on screen.
+    // Only enforce a small minimum so zero-delta events are still visible.
+    const curr = this.#packets[this.#cursor];
+    const next = this.#packets[this.#cursor + 1];
+    const deltaMicros = this.#parseTimeMicros(next.time) - this.#parseTimeMicros(curr.time);
+    const scaledMs = (deltaMicros / 1000) * 50;
+    const delay = scaledMs;
+
+    this.#playTimer = setTimeout(() => {
+      this.#playTimer = null;
+      this.#goTo(this.#cursor + 1);
+      this.#scheduleNext();
+    }, delay);
+  }
+
+  // ── Manual stepping ────────────────────────────────────
+
   #step(delta) {
+    this.#pause();
     const next = this.#cursor + delta;
     if (next < -1 || next >= this.#packets.length) return;
     if (next === -1) {
