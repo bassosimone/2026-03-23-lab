@@ -200,12 +200,12 @@ func (dq *routerDeliveryQueue) OnPacketTimer() {
 	dq.timer.Reset(delta)
 }
 
-// DeliverFrame delivers the given frame.
+// DeliverFrame delivers the given frame. The hook is only called
+// if the packet was actually delivered to an existing destination.
 func (dq *routerDeliveryQueue) DeliverFrame(frame uis.VNICFrame) {
-	if dq.router.hook != nil {
+	if dq.ix.Deliver(frame) && dq.router.hook != nil {
 		dq.router.hook(PacketDelivered, frame.Packet)
 	}
-	dq.ix.Deliver(frame)
 }
 
 // routerDeliveryEntry pairs a frame with its delivery deadline.
