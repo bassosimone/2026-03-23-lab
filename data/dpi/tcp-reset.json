@@ -7,7 +7,7 @@
         "action": "reset",
         "server_addr": "104.18.26.120",
         "server_port": 80,
-        "contains": "Host: www.example.com"
+        "contains": "www.example.com"
       }
     },
     {
@@ -16,7 +16,7 @@
         "action": "reset",
         "server_addr": "104.18.26.120",
         "server_port": 443,
-        "contains": "Host: www.example.com"
+        "contains": "www.example.com"
       }
     }
   ]
