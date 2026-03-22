@@ -1,0 +1,21 @@
+{
+  "description": "TCP drop: silently drop connections to 104.18.26.120",
+  "rules": [
+    {
+      "type": "tcp",
+      "rule": {
+        "action": "drop",
+        "server_addr": "104.18.26.120",
+        "server_port": 80
+      }
+    },
+    {
+      "type": "tcp",
+      "rule": {
+        "action": "drop",
+        "server_addr": "104.18.26.120",
+        "server_port": 443
+      }
+    }
+  ]
+}
