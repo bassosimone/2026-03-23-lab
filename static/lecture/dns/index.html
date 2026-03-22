@@ -61,7 +61,7 @@
   /* Console sizing. */
   .section .console-widget {
     width: 100%;
-    height: 400px;
+    height: 200px;
     margin-bottom: 16px;
   }
 
@@ -107,19 +107,29 @@
   <div id="packets-1"></div>
 </div>
 
-<!-- Section 2: Introducing DNS Censorship -->
+<!-- Section 2a: Enable DNS Censorship and Observe Spoofing -->
 <div class="section">
-  <h2>2. Introducing DNS Censorship</h2>
+  <h2>2a. Enabling DNS Censorship</h2>
   <p>
     Now let's enable DNS spoofing using the toggle below. Once active,
     run <code>dig +short www.example.com</code> again and notice the spoofed answer
-    arriving before the real one. Then try <code>curl http://www.example.com/</code>
-    &mdash; the connection will fail because the resolved IP address is bogus
-    and there is no server listening at that address.
+    arriving before the real one.
   </p>
   <div id="widget-policy"></div>
-  <div id="console-2"></div>
-  <div id="packets-2"></div>
+  <div id="console-2a"></div>
+  <div id="packets-2a"></div>
+</div>
+
+<!-- Section 2b: Connection Fails with Spoofed DNS -->
+<div class="section">
+  <h2>2b. Connection Fails</h2>
+  <p>
+    With censorship still active, try <code>curl http://www.example.com/</code>.
+    The connection will fail because the resolved IP address is bogus
+    and there is no server listening at that address.
+  </p>
+  <div id="console-2b"></div>
+  <div id="packets-2b"></div>
 </div>
 
 <!-- Section 3: Bypassing DNS Censorship -->
@@ -147,13 +157,17 @@
 new Console(document.getElementById("console-1"));
 new PacketViewer(document.getElementById("packets-1"));
 
-// Section 2: DNS censorship.
+// Section 2a: enable censorship, observe spoofed DNS.
 new PolicyToggle(document.getElementById("widget-policy"), {
   preset: "dns-spoofing",
   title: "DNS Spoofing (GFW)",
 });
-new Console(document.getElementById("console-2"));
-new PacketViewer(document.getElementById("packets-2"));
+new Console(document.getElementById("console-2a"));
+new PacketViewer(document.getElementById("packets-2a"));
+
+// Section 2b: curl fails with spoofed DNS.
+new Console(document.getElementById("console-2b"));
+new PacketViewer(document.getElementById("packets-2b"));
 
 // Section 3: bypassing DNS censorship.
 new Console(document.getElementById("console-3"));
