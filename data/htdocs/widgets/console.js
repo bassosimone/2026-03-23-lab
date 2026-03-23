@@ -51,7 +51,7 @@ class Console {
 
     // Show initial prompt.
     this.#term.write("Censorship Lab Console\r\n");
-    this.#term.write("Type a command (e.g., host www.example.com)\r\n");
+    this.#term.write("Type 'intro' for a quick guide.\r\n");
     this.#showPrompt();
   }
 
@@ -81,6 +81,32 @@ class Console {
     this.#line = "";
     this.#cursor = 0;
     this.#historyIndex = -1;
+  }
+
+  // Prints the intro guide.
+  #printIntro() {
+    const lines = [
+      "Censorship Lab Console",
+      "",
+      "Investigate DNS censorship:",
+      "  dig +short A www.example.com",
+      "  dig +short A www.example.com @130.192.3.21",
+      "",
+      "Fetch a page:",
+      "  curl http://www.example.com",
+      "  curl -v http://www.example.com",
+      "",
+      "Bypass DNS censorship using a known IP:",
+      "  curl --resolve www.example.com:80:104.18.26.120 http://www.example.com",
+      "",
+      "Test download throughput:",
+      "  curl -o /dev/null -# http://www.example.com/download",
+      "",
+      "Each command supports --help. Type 'clear' to clear the screen.",
+    ];
+    for (const line of lines) {
+      this.#term.write(line + "\r\n");
+    }
   }
 
   // Erases the current input and replaces it with newLine.
@@ -227,6 +253,9 @@ class Console {
             this.#line = "";
             this.#cursor = 0;
             this.#historyIndex = -1;
+          } else if (trimmed === "intro") {
+            this.#printIntro();
+            this.#showPrompt();
           } else {
             this.#runCommand(trimmed);
           }
