@@ -64,7 +64,7 @@ func serveMain(ctx context.Context, args []string) error {
 
 	// Optionally open the lab in the default browser.
 	if browse {
-		browser.OpenURL(baseURL + "lab/")
+		browser.OpenURL(baseURL)
 	}
 
 	// Serve HTTP until the context is canceled.

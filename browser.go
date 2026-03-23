@@ -31,5 +31,5 @@ func browserMain(_ context.Context, args []string) error {
 	}
 	baseURL := strings.TrimSpace(string(data))
 
-	return browser.OpenURL(baseURL + "lab/")
+	return browser.OpenURL(baseURL)
 }
