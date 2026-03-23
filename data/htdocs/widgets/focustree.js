@@ -30,8 +30,59 @@ class FocusTree {
     { id: "whoami", label: "Who am I?", desc: "SWE|RS, Neubot, MK, NDTv7", prereqs: [],
       title: "Simone, this one is simple: make sure they understand you are the research engineer working with M-Lab and LEAP, not the software developer based in Turin, not the university professor, and crucially not the former football player." },
 
-    { id: "ooni", label: "OONI", desc: "What OONI does", prereqs: ["whoami"],
+    { id: "ifreedom", label: "Internet Freedom", desc: "The bigger picture", prereqs: ["whoami"],
+      title: "Set the stage: why does internet freedom matter, and who works on it? One or two sentences, then dive into OONI." },
+
+    { id: "ooni", label: "OONI", desc: "What OONI does", prereqs: ["ifreedom"],
       title: "Make sure you mention OONI Probe, Web Connectivity, OONI Explorer, and the non profit. Also, remember to mention you do not work for OONI anymore. Your knowledge is historical!" },
+
+    { id: "governance", label: "Governance", desc: "Policy & regulation", prereqs: ["ifreedom"], optional: true,
+      title: "Internet governance, the bureaucratic apparatus. France has an appeals process for blocked sites. Most countries don't." },
+    { id: "platforms", label: "Other Platforms", desc: "IODA, Censored Planet", prereqs: ["ifreedom"], optional: true,
+      title: "You are not alone. IODA detects shutdowns, Censored Planet does remote measurements, and there is a whole ecosystem out there." },
+    { id: "resources", label: "Resources", desc: "Further reading", prereqs: ["ifreedom"], optional: true,
+      title: "censorbib.nymity.ch for the bibliography, net4people/bbs for community discussion. Leave these as breadcrumbs for the curious." },
+    { id: "shutdowns", label: "Shutdowns", desc: "Killing the internet", prereqs: ["ifreedom"], optional: true,
+      title: "When censorship is not subtle enough: just turn the whole thing off. IODA and other tools detect these events." },
+
+    { id: "methods", label: "Methods", desc: "OONI methodologies", prereqs: ["ooni"], optional: true,
+      title: "Deep dive into how OONI actually measures censorship. Only go here if the audience wants more." },
+    { id: "wc", label: "Web Connectivity", desc: "The flagship test", prereqs: ["methods"], optional: true,
+      title: "How do you tell if a website is blocked? Compare measurements from a probe and a test helper." },
+    { id: "dnscheck", label: "DNSCheck", desc: "DNS resolver testing", prereqs: ["methods"], optional: true,
+      title: "The experiment and the paper. Testing DNS resolvers at scale." },
+    { id: "testlists", label: "Test Lists", desc: "What to measure", prereqs: ["methods"], optional: true,
+      title: "Citizen Lab test lists. The boring but crucial question: which URLs do you test?" },
+    { id: "blockpages", label: "Block Pages", desc: "Fingerprinting blocks", prereqs: ["methods"], optional: true,
+      title: "Block pages and block addresses. How to recognize when an ISP is showing you a censorship page." },
+
+    { id: "research", label: "Research", desc: "Papers & reports", prereqs: ["ooni"], optional: true,
+      title: "Academic output and field investigations from the OONI period. Pick whichever resonates with the audience." },
+
+    { id: "papers", label: "Papers", desc: "Peer-reviewed", prereqs: ["research"], optional: true,
+      title: "The academic side. Co-authored papers with actual peer review and everything." },
+    { id: "http3paper", label: "HTTP/3", desc: "QUIC blocking", prereqs: ["papers"], optional: true,
+      title: "Measuring HTTP/3 blocking. What happens when censors encounter a protocol they don't fully understand yet." },
+    { id: "dohpaper", label: "DoT/DoH", desc: "Encrypted DNS", prereqs: ["papers"], optional: true,
+      title: "Measuring blocking of encrypted DNS. The cat-and-mouse game between resolvers and censors." },
+    { id: "spainpaper", label: "Spain", desc: "Ververis et al.", prereqs: ["papers"], optional: true,
+      title: "Blocking in Spain. A study of how censorship works in a European democracy." },
+    { id: "russiapaper", label: "Russia", desc: "Xue et al.", prereqs: ["papers"], optional: true,
+      title: "Measuring the emerging practice of throttling Twitter in Russia." },
+
+    { id: "reports", label: "Reports", desc: "Field investigations", prereqs: ["research"], optional: true,
+      title: "Real-world censorship events you investigated or contributed to. The war stories." },
+    { id: "snireport", label: "SNI Iran", desc: "SNI blocking", prereqs: ["reports"], optional: true,
+      title: "Measuring SNI-based blocking in Iran. Ties directly to the RST injection demo." },
+    { id: "jordan", label: "Jordan", desc: "Facebook live", prereqs: ["reports"], optional: true,
+      title: "Measuring Facebook live streaming interference during protests. The first time you used curl to investigate something." },
+    { id: "kazakhstan", label: "Kazakhstan", desc: "Election throttling", prereqs: ["reports"], optional: true,
+      title: "Throttling during the elections. When the government decides democracy needs a bandwidth limit." },
+    { id: "russia2022", label: "Russia 2022", desc: "Conflict censorship", prereqs: ["reports"], optional: true,
+      title: "How internet censorship changed in Russia during the first year of the conflict. Public talk given for OONI in 2024." },
+    { id: "cuba", label: "Cuba", desc: "Parknets", prereqs: ["reports"], optional: true,
+      title: "Exploring censorship in Cuba's park networks. A different kind of internet." },
+
     { id: "tool", label: "This Lab", desc: "Self-contained internet sim", prereqs: ["whoami"],
       title: "A self-contained simulation of a tiny subset of the internet, built on OONI code and gVisor. Walk them through the topology and give a quick tour of the tabs before touching the console." },
 
@@ -68,6 +119,13 @@ class FocusTree {
       title: "The firewall politely asks you to stop. By forging TCP packets." },
     { id: "throttle", label: "Throttle", desc: "Bandwidth limit", prereqs: ["censorship"],
       title: "Make the audience feel what dial-up was like. The younger ones won't believe you." },
+
+    { id: "currentwork", label: "Current Work", desc: "M-Lab & LEAP", prereqs: ["whoami"], optional: true,
+      title: "What you are doing right now. Keep it brief — one sentence each." },
+    { id: "mlab", label: "M-Lab", desc: "Giga / school perf.", prereqs: ["currentwork"], optional: true,
+      title: "Characterizing school network performance in collaboration with the Giga project." },
+    { id: "leap", label: "LEAP", desc: "VPN measurement", prereqs: ["currentwork"], optional: true,
+      title: "Defining a measurement framework for a mid-scale VPN." },
   ];
 
   constructor(container) {
@@ -160,12 +218,18 @@ class FocusTree {
   // ── Recursive build ────────────────────────────────────
 
   #build() {
-    // Find root(s) — nodes with no prereqs.
+    // Inner wrapper so the tree can be scrolled in both directions
+    // without the centering bug clipping the left side.
+    const inner = document.createElement("div");
+    inner.className = "focus-widget-inner";
+
     const roots = FocusTree.#DEFS.filter(d => d.prereqs.length === 0);
     for (const root of roots) {
-      this.#container.appendChild(this.#makeNode(root.id));
-      this.#buildSubtree(root.id, this.#container);
+      inner.appendChild(this.#makeNode(root.id));
+      this.#buildSubtree(root.id, inner);
     }
+
+    this.#container.appendChild(inner);
   }
 
   #buildSubtree(parentId, container) {
@@ -343,9 +407,10 @@ class FocusTree {
         node.state = "available";
       }
 
+      const def = this.#def(id);
       node.el.className = "focus-node";
       node.el.classList.add(`focus-${node.state}`);
-      const def = this.#def(id);
+      if (def.optional) node.el.classList.add("focus-optional");
       node.el.title = (node.state !== "unavailable" && def.title) ? def.title : "";
     }
 

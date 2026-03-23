@@ -7,11 +7,16 @@
   border-radius: 6px;
   font-family: 'Ubuntu Mono', 'Courier New', monospace;
   box-sizing: border-box;
+  overflow: auto;
+  padding: 30px 20px;
+}
+
+.focus-widget-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y: auto;
-  padding: 30px 20px;
+  min-width: min-content;
+  margin: 0 auto;
 }
 
 /* ── Node states ──────────────────────────────────────── */
@@ -31,8 +36,13 @@
 .focus-node.focus-unavailable {
   background: #111a24;
   border-color: #1e2e3e;
-  opacity: 0.4;
+  opacity: 0.6;
   cursor: default;
+}
+
+/* Optional nodes: dashed border (side quests) */
+.focus-node.focus-optional {
+  border-style: dashed;
 }
 
 /* Available: normal, clickable */
@@ -65,7 +75,7 @@
 /* ── Node text ────────────────────────────────────────── */
 
 .focus-node-label {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: bold;
   color: #c7d5e0;
 }
@@ -83,7 +93,7 @@
 }
 
 .focus-node-desc {
-  font-size: 12px;
+  font-size: 15px;
   color: #7a8a9a;
   margin-top: 4px;
 }
@@ -221,9 +231,9 @@
 }
 
 .focus-branch-col > .focus-node .focus-node-label {
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .focus-branch-col > .focus-node .focus-node-desc {
-  font-size: 10px;
+  font-size: 12px;
 }
