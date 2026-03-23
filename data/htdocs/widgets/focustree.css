@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
-/* Focus tree widget — Paradox grand strategy style */
+/* Focus tree widget — light mode, projector-safe */
 
 .focus-widget {
-  background: #0f1923;
+  background: #fff;
   border-radius: 6px;
   font-family: 'Ubuntu Mono', 'Courier New', monospace;
   box-sizing: border-box;
@@ -24,7 +24,7 @@
 .focus-node {
   width: 220px;
   padding: 12px 16px;
-  border: 2px solid #2a4a6b;
+  border: 2px solid #ccc;
   border-radius: 6px;
   text-align: center;
   user-select: none;
@@ -34,9 +34,9 @@
 
 /* Unavailable: dimmed, not interactive */
 .focus-node.focus-unavailable {
-  background: #111a24;
-  border-color: #1e2e3e;
-  opacity: 0.6;
+  background: #f5f5f5;
+  border-color: #ddd;
+  opacity: 0.5;
   cursor: default;
 }
 
@@ -47,27 +47,27 @@
 
 /* Available: normal, clickable */
 .focus-node.focus-available {
-  background: #1b2838;
-  border-color: #2a4a6b;
+  background: #fafafa;
+  border-color: #999;
   cursor: pointer;
 }
 
 .focus-node.focus-available:hover {
-  border-color: #4a7a9b;
-  background: #233548;
+  border-color: #666;
+  background: #f0f0f0;
 }
 
 /* Selected: glowing blue, active focus */
 .focus-node.focus-selected {
-  background: #1a3050;
-  border-color: #4a9eff;
-  box-shadow: 0 0 14px rgba(74, 158, 255, 0.5);
+  background: #e8f0fe;
+  border-color: #2a7ae2;
+  box-shadow: 0 0 12px rgba(42, 122, 226, 0.35);
   cursor: pointer;
 }
 
 /* Done: green */
 .focus-node.focus-done {
-  background: #142e1e;
+  background: #eafaf1;
   border-color: #27ae60;
   cursor: pointer;
 }
@@ -77,33 +77,33 @@
 .focus-node-label {
   font-size: 22px;
   font-weight: bold;
-  color: #c7d5e0;
+  color: #333;
 }
 
 .focus-node.focus-unavailable .focus-node-label {
-  color: #4a5a6a;
+  color: #aaa;
 }
 
 .focus-node.focus-selected .focus-node-label {
-  color: #8ac4ff;
+  color: #1a5cb0;
 }
 
 .focus-node.focus-done .focus-node-label {
-  color: #5dde8e;
+  color: #1e8449;
 }
 
 .focus-node-desc {
   font-size: 15px;
-  color: #7a8a9a;
+  color: #777;
   margin-top: 4px;
 }
 
 .focus-node.focus-unavailable .focus-node-desc {
-  color: #3a4a5a;
+  color: #bbb;
 }
 
 .focus-node.focus-selected .focus-node-desc {
-  color: #6a9ac0;
+  color: #4a8ad4;
 }
 
 .focus-node.focus-done .focus-node-desc {
@@ -115,7 +115,7 @@
 .focus-line {
   width: 2px;
   height: 18px;
-  background: #2a4a6b;
+  background: #ccc;
   flex-shrink: 0;
   transition: background 0.2s;
 }
@@ -136,7 +136,7 @@
 
 .focus-hbar {
   height: 2px;
-  background: #2a4a6b;
+  background: #ccc;
   transition: background 0.2s;
 }
 
@@ -162,7 +162,7 @@
 .focus-drop {
   width: 2px;
   height: 18px;
-  background: #2a4a6b;
+  background: #ccc;
   flex-shrink: 0;
   transition: background 0.2s;
 }
@@ -204,7 +204,7 @@
   content: "";
   width: 2px;
   height: 18px;
-  background: #2a4a6b;
+  background: #ccc;
   transition: background 0.2s;
 }
 
@@ -215,7 +215,7 @@
 /* Horizontal merge bar — margins set by JS */
 .focus-mbar {
   height: 2px;
-  background: #2a4a6b;
+  background: #ccc;
   transition: background 0.2s;
 }
 
