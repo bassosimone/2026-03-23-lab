@@ -6,7 +6,7 @@ require (
 	github.com/bassosimone/dnscodec v0.0.0-20260315095815-6c62273d0db8
 	github.com/bassosimone/dnsoverhttps v0.0.0-20260316100245-10d7d5c92d0f
 	github.com/bassosimone/iss v0.0.0-20260316100245-f9faccd177fa
-	github.com/bassosimone/minest v0.0.0-20260315095816-f43a2863ecf0
+	github.com/bassosimone/minest v0.0.0-20260316100245-448cfd743303
 	github.com/bassosimone/runtimex v0.0.0-20260108162100-336f3823f6b7
 	github.com/bassosimone/uis v0.0.0-20260315095815-5dfb32b84144
 	github.com/bassosimone/vclip v0.0.0-20260307133721-977dc994815e
@@ -36,5 +36,5 @@ require (
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
-	gvisor.dev/gvisor v0.0.0-20260312211231-b4724f244352 // indirect
+	gvisor.dev/gvisor v0.0.0-20260321183140-ae1fda41cd56 // indirect
 )

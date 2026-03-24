@@ -16,8 +16,8 @@ github.com/bassosimone/iox v0.0.0-20260214210219-fcf71040f780 h1:7YxchjmrFDdm7dJ
 github.com/bassosimone/iox v0.0.0-20260214210219-fcf71040f780/go.mod h1:3dhCKfl705UjK5ZLwS69bsp2l7TpYPwW73B5n3GDSYI=
 github.com/bassosimone/iss v0.0.0-20260316100245-f9faccd177fa h1:k5yciT2NB0jNIKDO1rMSIYdFaoB/cElLowGtOExetxo=
 github.com/bassosimone/iss v0.0.0-20260316100245-f9faccd177fa/go.mod h1:HvQBglNFb0Gqg9rhWJvXgY3QX1Myy5kR/CLESf3xAGs=
-github.com/bassosimone/minest v0.0.0-20260315095816-f43a2863ecf0 h1:cMCEDrgnqMxrULN8ZbGh+Js/qLRAJ1vWokJs8n4/nu4=
-github.com/bassosimone/minest v0.0.0-20260315095816-f43a2863ecf0/go.mod h1:b4hZcra8gC7JytC9u6VGiSc+RKDbiSrmxu3zw9UxBg8=
+github.com/bassosimone/minest v0.0.0-20260316100245-448cfd743303 h1:h4BIq8qaEvowgGURXKcWKNuOrPXY5wMs9O5v6zVMVD4=
+github.com/bassosimone/minest v0.0.0-20260316100245-448cfd743303/go.mod h1:UofySUvx06S1mUQwPxrq8ycDmEEC55JWiBNteaF7ONs=
 github.com/bassosimone/must v0.0.0-20260118074942-4ad662f6c302 h1:bW4Jb0IQ9XaMEnSoQkLHfVcgUVxtAf789wDvIL9cjAs=
 github.com/bassosimone/must v0.0.0-20260118074942-4ad662f6c302/go.mod h1:Hxg1TkK1lP//cjtcmvjfd87gcMvdDwzxaYL9ZY45P0E=
 github.com/bassosimone/netstub v0.0.0-20260215140819-e5f4b4b48997 h1:R50/QauP1wURY03phd3WLiD9Yarr+j4IMXPsGEbwP94=
@@ -91,5 +91,5 @@ golang.org/x/tools v0.43.0/go.mod h1:uHkMso649BX2cZK6+RpuIPXS3ho2hZo4FVwfoy1vIk0
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
-gvisor.dev/gvisor v0.0.0-20260312211231-b4724f244352 h1:gRqlhQZpLoYdTZtCEEvVWAPd7WKbIR8GvK4n96r04Ss=
-gvisor.dev/gvisor v0.0.0-20260312211231-b4724f244352/go.mod h1:xQ2PWgHmWJA/Ph4i1q1jBm39BKhc3W0DXqWoDSyuBOY=
+gvisor.dev/gvisor v0.0.0-20260321183140-ae1fda41cd56 h1:uv6AK24/CooJVX742UPHx2Eneu08SPrZnb77lzw/HmY=
+gvisor.dev/gvisor v0.0.0-20260321183140-ae1fda41cd56/go.mod h1:xQ2PWgHmWJA/Ph4i1q1jBm39BKhc3W0DXqWoDSyuBOY=
