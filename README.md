@@ -1,5 +1,7 @@
 # Censorship Lab
 
+[![Build Status](https://github.com/bassosimone/2026-03-23-lab/actions/workflows/go.yml/badge.svg)](https://github.com/bassosimone/2026-03-23-lab/actions) [![codecov](https://codecov.io/gh/bassosimone/2026-03-23-lab/branch/main/graph/badge.svg)](https://codecov.io/gh/bassosimone/2026-03-23-lab)
+
 A self-contained simulation of a tiny subset of the internet,
 built to explore how internet censorship works and how to detect it.
 
