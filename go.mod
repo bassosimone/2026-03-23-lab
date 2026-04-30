@@ -3,11 +3,12 @@ module github.com/bassosimone/2026-03-23-lab
 go 1.26.0
 
 require (
+	github.com/bassosimone/deferexit v0.0.0-20260430074002-1397452dfab1
 	github.com/bassosimone/dnscodec v0.0.0-20260426211622-1c3a8bede978
 	github.com/bassosimone/dnsoverhttps v0.0.0-20260426221555-f37e14290582
 	github.com/bassosimone/iss v0.0.0-20260426222944-426aa8ef9f90
 	github.com/bassosimone/minest v0.0.0-20260426222227-6fb8d662048b
-	github.com/bassosimone/runtimex v0.0.0-20260426205938-f859235d82e0
+	github.com/bassosimone/runtimex v0.0.0-20260430082757-ec3a7b516e79
 	github.com/bassosimone/uis v0.0.0-20260426220946-d787919141e0
 	github.com/bassosimone/vclip v0.0.0-20260426225308-5c636546ddee
 	github.com/bassosimone/vflag v0.0.0-20260426222617-67f3423bcf90

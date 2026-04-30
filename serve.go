@@ -61,6 +61,7 @@ func serveMain(ctx context.Context, args []string) error {
 	fmt.Fprintf(os.Stderr, "listening on %s\n", baseURL)
 	urlFile := filepath.Join(datadir, "url.txt")
 	runtimex.LogFatalOnError0(os.WriteFile(urlFile, []byte(baseURL), 0644))
+	defer os.Remove(urlFile)
 
 	// Optionally open the lab in the default browser.
 	if browse {
@@ -74,9 +75,6 @@ func serveMain(ctx context.Context, args []string) error {
 		srv.Close()
 	}()
 	err := srv.Serve(listener)
-
-	// Make sure we always remove the URL file.
-	os.Remove(urlFile)
 
 	// Decide whether there was a real error.
 	if err == http.ErrServerClosed {

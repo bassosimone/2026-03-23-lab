@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/bassosimone/deferexit"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 	shellquote "github.com/kballard/go-shellquote"
@@ -84,7 +85,7 @@ func runMain(ctx context.Context, args []string) error {
 	runtimex.LogFatalOnError0(scanner.Err())
 
 	if exitcode != 0 {
-		os.Exit(exitcode)
+		deferexit.Panic(exitcode)
 	}
 	return nil
 }
