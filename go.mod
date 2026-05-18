@@ -6,10 +6,10 @@ require (
 	github.com/bassosimone/deferexit v0.0.0-20260430074002-1397452dfab1
 	github.com/bassosimone/dnscodec v0.0.0-20260511083822-baba060bd35d
 	github.com/bassosimone/dnsoverhttps v0.0.0-20260511085611-e93ded12cfb7
-	github.com/bassosimone/iss v0.0.0-20260511091314-925a9ca9aed3
+	github.com/bassosimone/iss v0.0.0-20260518184831-cfbc0753c0c2
 	github.com/bassosimone/minest v0.0.0-20260511085935-ffd477bc2b0c
 	github.com/bassosimone/runtimex v0.0.0-20260430082757-ec3a7b516e79
-	github.com/bassosimone/uis v0.0.0-20260511085340-3f361254c84e
+	github.com/bassosimone/uis v0.0.0-20260518182845-3b08c92a27ac
 	github.com/bassosimone/vclip v0.0.0-20260511091736-a75909f035a8
 	github.com/bassosimone/vflag v0.0.0-20260511090205-842d47f51218
 	github.com/google/gopacket v1.1.19
@@ -37,5 +37,5 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
-	gvisor.dev/gvisor v0.0.0-20260508212337-96dad6a2da94 // indirect
+	gvisor.dev/gvisor v0.0.0-20260518063529-209a0ce076a1 // indirect
 )
