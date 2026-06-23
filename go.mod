@@ -3,15 +3,15 @@ module github.com/bassosimone/2026-03-23-lab
 go 1.26.3
 
 require (
-	github.com/bassosimone/deferexit v0.0.0-20260615110049-f737d0c9ca89
+	github.com/bassosimone/deferexit v0.0.0-20260622074722-e5e245b2f690
 	github.com/bassosimone/dnscodec v0.0.0-20260615114925-94a4c2fbf3b4
 	github.com/bassosimone/dnsoverhttps v0.0.0-20260617121343-ce310417d710
-	github.com/bassosimone/iss v0.0.0-20260617164115-67fdd5efb203
+	github.com/bassosimone/iss v0.0.0-20260623170918-24b9a3f651b6
 	github.com/bassosimone/minest v0.0.0-20260617161818-8b6c728d5e95
 	github.com/bassosimone/runtimex v0.0.0-20260615112505-ee72c4f0769e
-	github.com/bassosimone/uis v0.0.0-20260617115542-d9231c663230
-	github.com/bassosimone/vclip v0.0.0-20260617165137-5a71d326bb60
-	github.com/bassosimone/vflag v0.0.0-20260617162142-dce36f44c211
+	github.com/bassosimone/uis v0.0.0-20260623164929-0b62a963ad5e
+	github.com/bassosimone/vclip v0.0.0-20260623171605-f585a395e8a3
+	github.com/bassosimone/vflag v0.0.0-20260623165635-b59716a8b461
 	github.com/google/gopacket v1.1.19
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/miekg/dns v1.1.72
@@ -26,7 +26,7 @@ require (
 	github.com/bassosimone/iox v0.0.0-20260617061114-bc732de90fb8 // indirect
 	github.com/bassosimone/must v0.0.0-20260617064914-34c9ef153034 // indirect
 	github.com/bassosimone/pkitest v0.0.0-20260615122033-8e73e7843b18 // indirect
-	github.com/bassosimone/textwrap v0.0.0-20260615113929-f1a1c54eeabd // indirect
+	github.com/bassosimone/textwrap v0.0.0-20260623161521-ecf2c54815db // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/rogpeppe/go-internal v1.15.0 // indirect
 	golang.org/x/exp v0.0.0-20260611194520-c48552f49976 // indirect
@@ -37,5 +37,5 @@ require (
 	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.46.0 // indirect
-	gvisor.dev/gvisor v0.0.0-20260616165937-8e4bc62602eb // indirect
+	gvisor.dev/gvisor v0.0.0-20260622202500-b859e3a10a38 // indirect
 )
