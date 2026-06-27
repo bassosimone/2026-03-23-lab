@@ -131,14 +131,14 @@ type UDPDetail struct {
 func Summarize(entry pktlog.DissectedEntry, number int) *PacketSummary {
 	dp := entry.Packet
 	s := &PacketSummary{
-		Number:   number,
-		Event:    eventString(entry.Event),
-		Time:     entry.Time.Format("15:04:05.000000"),
-		Src:      dp.SourceAddr().String(),
-		Dst:      dp.DestinationAddr().String(),
-		Length:   len(entry.RawPacket),
-		SrcPort:  dp.SourcePort(),
-		DstPort:  dp.DestinationPort(),
+		Number:  number,
+		Event:   eventString(entry.Event),
+		Time:    entry.Time.Format("15:04:05.000000"),
+		Src:     dp.SourceAddr().String(),
+		Dst:     dp.DestinationAddr().String(),
+		Length:  len(entry.RawPacket),
+		SrcPort: dp.SourcePort(),
+		DstPort: dp.DestinationPort(),
 	}
 
 	// Build detail.
