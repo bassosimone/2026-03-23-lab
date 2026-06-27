@@ -117,7 +117,7 @@ func dissectTLS(payload []byte) *TLSDetail {
 		Record: &TLSRecordDetail{
 			ContentType: tlsContentTypeName(contentType),
 			Version:     tlsVersionName(protoVersion),
-			Length:       recordLen,
+			Length:      recordLen,
 		},
 	}
 
