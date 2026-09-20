@@ -1,3 +1,5 @@
+# Managed by curate: do not edit.
+
 name: Go
 
 on:
@@ -11,10 +13,8 @@ jobs:
     strategy:
       matrix:
         goversion:
-          # The first entry of the matrix should be the
-          # version indicated inside the `go.mod`
-          - "1.26"
-          - "1.27"
+          - "oldstable"
+          - "stable"
 
     runs-on: ubuntu-latest
     steps:
@@ -39,8 +39,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          # Here we should use the current go version
-          go-version: "1.27"
+          go-version: "stable"
 
       - name: Measure Coverage
         run: go test -short -covermode=atomic -coverprofile=coverage.out ./...
@@ -50,4 +49,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.out
+          flags: go
           fail_ci_if_error: true
