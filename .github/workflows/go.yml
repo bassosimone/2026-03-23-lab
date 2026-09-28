@@ -13,7 +13,6 @@ jobs:
     strategy:
       matrix:
         goversion:
-          - "oldstable"
           - "stable"
 
     runs-on: ubuntu-latest
