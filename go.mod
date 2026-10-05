@@ -6,12 +6,12 @@ require (
 	github.com/bassosimone/deferexit v0.0.0-20260928111243-1ceec2208869
 	github.com/bassosimone/dnscodec v0.0.0-20260928111729-777d57044539
 	github.com/bassosimone/dnsoverhttps v0.0.0-20260928113301-bc7943ece3e5
-	github.com/bassosimone/iss v0.0.0-20260928114200-52e094c912c3
+	github.com/bassosimone/iss v0.0.0-20261005053143-5f306506b3ae
 	github.com/bassosimone/minest v0.0.0-20260928113439-6dc61c09965e
 	github.com/bassosimone/runtimex v0.0.0-20260928111457-f2fe934d5065
-	github.com/bassosimone/uis v0.0.0-20260928113107-1bbfba4fb7b3
-	github.com/bassosimone/vclip v0.0.0-20260928114705-86887ca1c7df
-	github.com/bassosimone/vflag v0.0.0-20260928113542-10198c4d0a30
+	github.com/bassosimone/uis v0.0.0-20261005052457-f78ee73b5c40
+	github.com/bassosimone/vclip v0.0.0-20261005053301-a4fe6d3e2269
+	github.com/bassosimone/vflag v0.0.0-20261001050637-5cd81148840b
 	github.com/google/gopacket v1.1.19
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/miekg/dns v1.1.73
@@ -34,5 +34,5 @@ require (
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
-	gvisor.dev/gvisor v0.0.0-20260928000043-30a83191d380 // indirect
+	gvisor.dev/gvisor v0.0.0-20261005051104-d7e5e1be1f5c // indirect
 )
