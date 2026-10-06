@@ -3,15 +3,15 @@ module github.com/bassosimone/2026-03-23-lab
 go 1.26.3
 
 require (
-	github.com/bassosimone/deferexit v0.0.0-20260928111243-1ceec2208869
-	github.com/bassosimone/dnscodec v0.0.0-20260928111729-777d57044539
-	github.com/bassosimone/dnsoverhttps v0.0.0-20260928113301-bc7943ece3e5
-	github.com/bassosimone/iss v0.0.0-20261005053143-5f306506b3ae
-	github.com/bassosimone/minest v0.0.0-20260928113439-6dc61c09965e
-	github.com/bassosimone/runtimex v0.0.0-20260928111457-f2fe934d5065
-	github.com/bassosimone/uis v0.0.0-20261005052457-f78ee73b5c40
-	github.com/bassosimone/vclip v0.0.0-20261005053301-a4fe6d3e2269
-	github.com/bassosimone/vflag v0.0.0-20261001050637-5cd81148840b
+	github.com/bassosimone/deferexit v0.0.0-20261005144642-cbfbd3aa5dc7
+	github.com/bassosimone/dnscodec v0.0.0-20261005145128-388641c61fb4
+	github.com/bassosimone/dnsoverhttps v0.0.0-20261006065313-d3b927428e25
+	github.com/bassosimone/iss v0.0.0-20261006070508-24bae46fdac6
+	github.com/bassosimone/minest v0.0.0-20261006065427-c31e3377405b
+	github.com/bassosimone/runtimex v0.0.0-20261005144844-77dc639b0e90
+	github.com/bassosimone/uis v0.0.0-20261006065211-4bfe519a8be9
+	github.com/bassosimone/vclip v0.0.0-20261006070757-1ed765ad0339
+	github.com/bassosimone/vflag v0.0.0-20261006065510-ce05c7d76a28
 	github.com/google/gopacket v1.1.19
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/miekg/dns v1.1.73
@@ -20,19 +20,19 @@ require (
 )
 
 require (
-	github.com/bassosimone/dnstest v0.0.0-20260928112322-b128c7797e99 // indirect
-	github.com/bassosimone/flagparser v0.0.0-20260928111833-44e028b025f9 // indirect
-	github.com/bassosimone/flagscanner v0.0.0-20260928111414-ec0ac9195577 // indirect
-	github.com/bassosimone/iox v0.0.0-20260928112414-6699b8367e72 // indirect
-	github.com/bassosimone/must v0.0.0-20260928112453-2a38e7bb20e8 // indirect
-	github.com/bassosimone/pkitest v0.0.0-20260928112139-c2ca7e68520a // indirect
-	github.com/bassosimone/textwrap v0.0.0-20260928111620-10df61158669 // indirect
+	github.com/bassosimone/dnstest v0.0.0-20261005145717-2d50c4555014 // indirect
+	github.com/bassosimone/flagparser v0.0.0-20261005145229-03254f4ff6fc // indirect
+	github.com/bassosimone/flagscanner v0.0.0-20261005144756-a1383349131b // indirect
+	github.com/bassosimone/iox v0.0.0-20261005145813-ba7aa6d554ea // indirect
+	github.com/bassosimone/must v0.0.0-20261005145849-34793a0e24f8 // indirect
+	github.com/bassosimone/pkitest v0.0.0-20261005145452-7b85881f912d // indirect
+	github.com/bassosimone/textwrap v0.0.0-20261005145027-6e50b1e009a9 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/rogpeppe/go-internal v1.16.0 // indirect
-	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba // indirect
+	golang.org/x/exp v0.0.0-20261005173118-76772065c9b0 // indirect
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
-	gvisor.dev/gvisor v0.0.0-20261005051104-d7e5e1be1f5c // indirect
+	gvisor.dev/gvisor v0.0.0-20261006051022-57c1e6e87211 // indirect
 )

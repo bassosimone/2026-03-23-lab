@@ -10,11 +10,6 @@ on:
 
 jobs:
   build_and_test:
-    strategy:
-      matrix:
-        goversion:
-          - "stable"
-
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -22,13 +17,16 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version: "${{ matrix.goversion }}"
+          go-version: "stable"
 
       - name: Build
         run: go build ./...
 
       - name: Test
         run: go test -race ./...
+
+      - name: Test with the go.mod go version
+        run: GOTOOLCHAIN="go$(go list -m -f '{{.GoVersion}}')" go test -race ./...
 
   coverage:
     runs-on: ubuntu-latest
